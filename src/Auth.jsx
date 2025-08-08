@@ -7,10 +7,19 @@ export default function Auth() {
   const [msg, setMsg] = useState("");
 
   const signUp = async () => {
-    setMsg("");
-    const { error } = await supabase.auth.signUp({ email, password });
-    setMsg(error ? error.message : "Check your email to confirm.");
-  };
+setMsg("");
+const { data, error } = await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    emailRedirectTo: import.meta.env.DEV
+      ? "http://localhost:5173"
+      : "https://regal-gecko-30e2a8.netlify.app"
+  }
+});
+console.log("signUp:", data, error);
+setMsg(error ? error.message : "Check your email to confirm.");
+  }
 
   const signIn = async () => {
     setMsg("");
