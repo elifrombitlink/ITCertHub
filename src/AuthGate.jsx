@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase } from "./supabaseclient";
 import Auth from "./Auth";
 
 export default function AuthGate({ children }) {
