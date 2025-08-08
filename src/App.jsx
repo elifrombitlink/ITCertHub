@@ -7,6 +7,8 @@ import {
   RefreshCw, Play, Pause, RotateCcw, FileText, Settings, BadgeCheck,
   CalendarClock, Sparkles, HelpCircle, BarChart3, Lightbulb, ArrowRight
 } from "lucide-react";
+import { supabase } from "./supabaseclient";
+
 
 /**
  * IT Cert Study Hub - Single File React App
@@ -82,7 +84,7 @@ const Tabs = ({ tabs, value, onChange }) => (
  * Minimal, practical list of starter and intermediate certs with metadata.
  * Version: v1.0 (stable vendor-neutral fields to avoid stale exam codes).
  */
-const CERTS = [
+const BASE_CERTS = [
   // CompTIA - Starter
   {
     id: "itf+", name: "CompTIA ITF+", vendor: "CompTIA", level: "Starter",
@@ -269,9 +271,6 @@ const saveState = (s) => localStorage.setItem(LS_KEY, JSON.stringify(s));
 
 // ---------- Utilities ----------
 const unique = (arr) => Array.from(new Set(arr));
-const allVendors = unique(CERTS.map(c => c.vendor)).sort();
-const allDomains = unique(CERTS.flatMap(c => c.domains)).sort();
-const allLevels = unique(CERTS.map(c => c.level));
 
 // ---------- Main Component ----------
 export default function ITCertStudyHub() {
@@ -286,6 +285,39 @@ export default function ITCertStudyHub() {
   const [pomodoro, setPomodoro] = useState({ running:false, seconds: 25*60, mode: "focus" });
   const [fcProgress, setFcProgress] = useState({}); // certId -> {index, known:Set}
   const [quizState, setQuizState] = useState({}); // certId -> {idx, correct, answers:[]}
+  // load external cert data from /public/certs.json
+const [external, setExternal] = useState({
+  certs: [],
+  defaults: { flashcards: {}, quiz: {} }
+});
+
+useEffect(() => {
+  fetch("/certs.json")
+    .then(r => (r.ok ? r.json() : Promise.reject()))
+    .then(data => setExternal(data))
+    .catch(() => {}); // ignore if certs.json is missing
+}, []);
+
+// merge built-in and external certs
+const ALL_CERTS = useMemo(
+  () => [...BASE_CERTS, ...(external.certs || [])],
+  [external]
+);
+
+// recompute vendors, domains, levels using ALL_CERTS
+const allVendors = useMemo(
+  () => unique(ALL_CERTS.map(c => c.vendor)).sort(),
+  [ALL_CERTS]
+);
+const allDomains = useMemo(
+  () => unique(ALL_CERTS.flatMap(c => c.domains)).sort(),
+  [ALL_CERTS]
+);
+const allLevels = useMemo(
+  () => unique(ALL_CERTS.map(c => c.level)),
+  [ALL_CERTS]
+);
+
 
   // load
   useEffect(() => {
@@ -316,7 +348,7 @@ export default function ITCertStudyHub() {
   }, [pomodoro.running]);
 
   const filtered = useMemo(() => {
-    return CERTS.filter(c => (
+    return ALL_CERTS.filter(c => (
       (vendor === "all" || c.vendor === vendor) &&
       (domain === "all" || c.domains.includes(domain)) &&
       (level === "all" || c.level === level) &&
@@ -328,7 +360,7 @@ export default function ITCertStudyHub() {
   const addToPlan = (id) => setPlan(p => ({ ...p, [id]: p[id] || { targetDate: "", progress: 0, notes: "" } }));
   const removeFromPlan = (id) => setPlan(p => { const n = { ...p }; delete n[id]; return n; });
 
-  const certById = (id) => CERTS.find(c => c.id === id);
+  const certById = (id) => ALL_CERTS.find(c => c.id === id);
 
   // Flashcards helpers
   const getFlashcards = (id) => certById(id)?.flashcards || DEFAULT_FLASHCARDS[id] || [];
@@ -366,16 +398,20 @@ export default function ITCertStudyHub() {
     URL.revokeObjectURL(url);
   };
   const importData = async (file) => {
-    const text = await file.text();
-    try {
-      const obj = JSON.parse(text);
-      setFavorites(obj.favorites || []);
-      setPlan(obj.plan || {});
-      setPomodoro(obj.pomodoro || { running:false, seconds:25*60, mode:"focus" });
-      setFcProgress(obj.fcProgress || {});
-      setQuizState(obj.quizState || {});
-    } catch {}
-  };
+  const text = await file.text();
+  try {
+    const obj = JSON.parse(text);
+    setFavorites(obj.favorites || []);
+    setPlan(obj.plan || []);
+    setPomodoro(obj.pomodoro || { running: false, seconds: 25 * 60, mode: "focus" });
+    setFcProgress(obj.fcProgress || {});
+    setQuizState(obj.quizState || {});
+  } catch (err) {
+    console.error(err);
+    alert("Invalid JSON file");
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-gray-900">
@@ -393,11 +429,28 @@ export default function ITCertStudyHub() {
           </div>
           <div className="flex items-center gap-2">
             <label className="cursor-pointer">
-              <input type="file" className="hidden" accept="application/json" onChange={e => e.target.files && importData(e.target.files[0])} />
+              <input
+                type="file"
+                className="hidden"
+                accept="application/json"
+                onChange={e => {
+                  const file = e.target.files && e.target.files[0];
+                  if (file) importData(file);
+                  // Reset input so same file can be selected again
+                  e.target.value = "";
+                }}
+              />
               <Button variant="outline"><Upload size={16}/> Import</Button>
             </label>
+
             <Button variant="outline" onClick={exportData}><Download size={16}/> Export</Button>
-            <Button variant="accent" onClick={() => setTab("plan")}><ClipboardList size={16}/> My Plan</Button>
+
+            <Button variant="outline" onClick={() => setTab("plan")}><ClipboardList size={16}/> My Plan</Button>
+
+            {/* Sign out */}
+            <Button variant="outline" onClick={() => supabase.auth.signOut()}>
+              <X size={16}/> Sign out
+            </Button>
           </div>
         </div>
       </header>
@@ -522,7 +575,7 @@ export default function ITCertStudyHub() {
                     <div className="mb-3 text-xs text-gray-600">{r.note}</div>
                     <div className="flex flex-wrap gap-2">
                       {r.items.map(step => {
-                        const c = CERTS.find(x=>x.name===step);
+                        const c = ALL_CERTS.find(x=>x.name===step);
                         return (
                           <Button key={step} size="sm" variant={plan[c?.id] ? "subtle" : "outline"} onClick={()=> c && addToPlan(c.id)}>
                             <Plus size={14}/> Add {c?.vendor}
@@ -594,7 +647,7 @@ export default function ITCertStudyHub() {
               <Card className="p-4">
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <div className="text-sm font-semibold">Choose a cert</div>
-                  <Select value={activeCert?.id || Object.keys(plan)[0] || CERTS[0].id} onChange={val=>setActiveCert(certById(val))} options={CERTS.map(c=>({value:c.id,label:c.name}))} />
+                  <Select value={activeCert?.id || Object.keys(plan)[0] || ALL_CERTS[0].id} onChange={val=>setActiveCert(certById(val))} options={ALL_CERTS.map(c=>({value:c.id,label:c.name}))} />
                 </div>
                 {activeCert ? (
                   <Flashcards cert={activeCert} getFlashcards={getFlashcards} next={nextFlash} fcProgress={fcProgress[activeCert.id]}/>
