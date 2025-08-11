@@ -13,8 +13,8 @@ const { data, error } = await supabase.auth.signUp({
   password,
   options: {
     emailRedirectTo: import.meta.env.DEV
-      ? "http://localhost:5173"
-      : "https://regal-gecko-30e2a8.netlify.app"
+      ? "http://localhost:5173/auth/callback"
+      : "https://regal-gecko-30e2a8.netlify.app/auth/callback"
   }
 });
 console.log("signUp:", data, error);
