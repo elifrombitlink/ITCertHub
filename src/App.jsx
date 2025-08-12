@@ -1,48 +1,49 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Search, Filter, Star, StarOff, BookOpen, GraduationCap, Timer, 
-  ClipboardList, CheckCircle2, X, ExternalLink, Plus, Minus, 
-  Download, Upload, Trash2, ChevronRight, FolderPlus, NotebookPen,
+import {
+  Search, Filter, Star, StarOff, BookOpen, Timer,
+  ClipboardList, CheckCircle2, X, ExternalLink, Plus, Minus,
+  Download, Upload, Trash2, FolderPlus, NotebookPen,
   RefreshCw, Play, Pause, RotateCcw, FileText, Settings, BadgeCheck,
-  CalendarClock, Sparkles, HelpCircle, BarChart3, Lightbulb, ArrowRight
+  Sparkles, HelpCircle, BarChart3, Lightbulb, ArrowRight
 } from "lucide-react";
 import { supabase } from "./supabaseclient";
 
+/** =========================================================
+ * CertWolf Brand
+ * ======================================================= */
+const BRAND_DARK = "#111d2a";   // deep navy from logo background
+const BRAND_BLUE = "#1a73e8";   // button/link blue
+const BRAND_BG   = "#FAFAFA";   // app background
+const BRAND_WHITE= "#FFFFFF";
 
-/**
- * IT Cert Study Hub - Single File React App
- * - Tailwind CSS classes
- * - Framer Motion animations
- * - Minimal shadcn-like primitives re-implemented inline to avoid external deps
- *   (Button, Card, Badge, Tabs, Input, Select). These are simple wrappers so
- *   this file works anywhere without a build step that injects shadcn.
- * - LocalStorage persistence
- * - Filters, search, roadmaps, flashcards, quizzes, pomodoro, notes, progress
- *
- * Tip: Drop this into any React app. Tailwind recommended but not required.
- */
-
-// ---------- Tiny UI Primitives (no external deps) ----------
+/** =========================================================
+ * Tiny UI primitives (framework-agnostic)
+ * ======================================================= */
 const cx = (...clx) => clx.filter(Boolean).join(" ");
 
-const Button = ({ className = "", variant = "default", size = "md", ...props }) => {
-  const base = "inline-flex items-center gap-2 rounded-2xl border transition px-3 py-2 text-sm font-medium";
-  const variants = {
-    default: "bg-black text-white border-black hover:bg-white hover:text-black",
-    ghost: "bg-transparent border-transparent hover:bg-gray-100",
-    outline: "bg-white border-gray-300 text-gray-900 hover:bg-gray-50",
-    subtle: "bg-gray-100 border-gray-200 hover:bg-gray-200",
-    success: "bg-green-600 border-green-600 text-white hover:brightness-110",
-    danger: "bg-red-600 border-red-600 text-white hover:brightness-110",
-    accent: "bg-[#6D8196] border-[#6D8196] text-white hover:brightness-110",
+const Button = ({ className = "", variant = "default", size = "md", style, ...props }) => {
+  const base = "inline-flex items-center gap-2 rounded-2xl border transition px-3 py-2 text-sm font-medium hover:opacity-90";
+  const sizes = { sm: "px-2 py-1 text-xs", md: "px-3 py-2 text-sm", lg: "px-4 py-2 text-base" };
+
+  // Inline styles to guarantee exact brand colors without relying on Tailwind arbitrary values
+  const stylesByVariant = {
+    default: { backgroundColor: BRAND_DARK, borderColor: BRAND_DARK, color: BRAND_WHITE },
+    ghost:   { backgroundColor: "transparent", borderColor: "transparent", color: BRAND_DARK },
+    outline: { backgroundColor: BRAND_WHITE, borderColor: "#D1D5DB", color: "#111827" },
+    subtle:  { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB", color: "#111827" },
+    success: { backgroundColor: "#16A34A", borderColor: "#16A34A", color: BRAND_WHITE },
+    danger:  { backgroundColor: "#DC2626", borderColor: "#DC2626", color: BRAND_WHITE },
+    accent:  { backgroundColor: BRAND_BLUE, borderColor: BRAND_BLUE, color: BRAND_WHITE },
   };
-  const sizes = {
-    sm: "px-2 py-1 text-xs",
-    md: "px-3 py-2 text-sm",
-    lg: "px-4 py-2 text-base",
-  };
-  return <button className={cx(base, variants[variant], sizes[size], className)} {...props} />;
+
+  return (
+    <button
+      className={cx(base, sizes[size], className)}
+      style={{ ...(stylesByVariant[variant] || {}), ...(style || {}) }}
+      {...props}
+    />
+  );
 };
 
 const Card = ({ className = "", ...props }) => (
@@ -56,11 +57,23 @@ const Badge = ({ children, className = "" }) => (
 );
 
 const Input = ({ className = "", ...props }) => (
-  <input className={cx("w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black", className)} {...props} />
+  <input
+    className={cx(
+      "w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2",
+      className
+    )}
+    style={{ boxShadow: `0 0 0 0 rgba(0,0,0,0)`, caretColor: BRAND_DARK }}
+    {...props}
+  />
 );
 
 const Select = ({ className = "", options = [], value, onChange }) => (
-  <select className={cx("w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black", className)} value={value} onChange={e => onChange(e.target.value)}>
+  <select
+    className={cx("w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2", className)}
+    style={{ borderColor: "#D1D5DB" }}
+    value={value}
+    onChange={e => onChange(e.target.value)}
+  >
     {options.map(o => (
       <option key={o.value} value={o.value}>{o.label}</option>
     ))}
@@ -71,7 +84,12 @@ const Tabs = ({ tabs, value, onChange }) => (
   <div>
     <div className="flex flex-wrap gap-2">
       {tabs.map(t => (
-        <Button key={t.value} variant={value === t.value ? "default" : "outline"} onClick={() => onChange(t.value)}>
+        <Button
+          key={t.value}
+          variant={value === t.value ? "default" : "outline"}
+          onClick={() => onChange(t.value)}
+          style={value === t.value ? { backgroundColor: BRAND_DARK, borderColor: BRAND_DARK, color: BRAND_WHITE } : {}}
+        >
           {t.icon && <t.icon size={16} />} {t.label}
         </Button>
       ))}
@@ -79,11 +97,9 @@ const Tabs = ({ tabs, value, onChange }) => (
   </div>
 );
 
-// ---------- Data ----------
-/**
- * Minimal, practical list of starter and intermediate certs with metadata.
- * Version: v1.0 (stable vendor-neutral fields to avoid stale exam codes).
- */
+/** =========================================================
+ * Data
+ * ======================================================= */
 const BASE_CERTS = [
   // CompTIA - Starter
   {
@@ -205,7 +221,7 @@ const BASE_CERTS = [
   { id: "itil4f", name: "ITIL 4 Foundation", vendor: "AXELOS", level: "Starter", domains: ["ITSM"], estHours: 25, skills: ["ITSM", "process", "value streams"] },
   { id: "psm1", name: "Scrum.org PSM I", vendor: "Scrum.org", level: "Starter", domains: ["Project Mgmt"], estHours: 20, skills: ["scrum", "agile", "roles & events"] },
 
-  // Palo Alto, Juniper, Aruba (popular associate-level)
+  // Palo Alto, Juniper, Aruba
   { id: "pccet", name: "Palo Alto PCCET", vendor: "Palo Alto Networks", level: "Starter", domains: ["Security", "Networking"], estHours: 40, skills: ["firewall basics", "cloud sec"] },
   { id: "pcnsa", name: "Palo Alto PCNSA", vendor: "Palo Alto Networks", level: "Intermediate", domains: ["Security", "Networking"], estHours: 120, skills: ["policy", "NAT", "content id"] },
   { id: "jncia", name: "Juniper JNCIA-Junos", vendor: "Juniper", level: "Starter", domains: ["Networking"], estHours: 60, skills: ["junos cli", "routing", "switching"] },
@@ -234,45 +250,50 @@ const DEFAULT_QUIZ = {
   ],
 };
 
-// Suggested roadmaps
 const ROADMAPS = [
   {
     id: "helpdesk",
     title: "Helpdesk to Desktop",
     items: ["CompTIA ITF+", "CompTIA A+", "Microsoft MS-900", "CompTIA Network+"],
-    note: "Hands-on labs weekly. Aim for ticket triage speed and documentation." 
+    note: "Hands-on labs weekly. Aim for ticket triage speed and documentation."
   },
   {
     id: "networking",
     title: "Networking Associate Path",
     items: ["CompTIA Network+", "Cisco CCNA", "Juniper JNCIA-Junos", "Aruba ACA Networking"],
-    note: "Build a home lab with two switches and a router, practice VLANs and OSPF." 
+    note: "Build a home lab with two switches and a router, practice VLANs and OSPF."
   },
   {
     id: "security",
     title: "Security Analyst Path",
     items: ["CompTIA Security+", "ISC2 Certified in Cybersecurity (CC)", "Cisco CyberOps Associate", "Microsoft SC-200"],
-    note: "Practice SIEM with Sentinel or Splunk Free, run capture-the-flag weekly." 
+    note: "Practice SIEM with Sentinel or Splunk Free, run capture-the-flag weekly."
   },
   {
     id: "cloud",
     title: "Cloud Associate Path",
     items: ["AWS Cloud Practitioner", "Microsoft AZ-900 Azure Fundamentals", "AWS Solutions Architect Associate", "Microsoft AZ-104 Azure Administrator"],
-    note: "Keep personal cloud costs under $20 per month using free tiers and budgets." 
+    note: "Keep personal cloud costs under $20 per month using free tiers and budgets."
   },
 ];
 
-// ---------- Persistence ----------
+/** =========================================================
+ * Persistence
+ * ======================================================= */
 const LS_KEY = "it-cert-hub/v1";
 const loadState = () => {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch { return {}; }
 };
 const saveState = (s) => localStorage.setItem(LS_KEY, JSON.stringify(s));
 
-// ---------- Utilities ----------
+/** =========================================================
+ * Utils
+ * ======================================================= */
 const unique = (arr) => Array.from(new Set(arr));
 
-// ---------- Main Component ----------
+/** =========================================================
+ * Main Component
+ * ======================================================= */
 export default function ITCertStudyHub() {
   const [tab, setTab] = useState("catalog");
   const [q, setQ] = useState("");
@@ -285,39 +306,21 @@ export default function ITCertStudyHub() {
   const [pomodoro, setPomodoro] = useState({ running:false, seconds: 25*60, mode: "focus" });
   const [fcProgress, setFcProgress] = useState({}); // certId -> {index, known:Set}
   const [quizState, setQuizState] = useState({}); // certId -> {idx, correct, answers:[]}
-  // load external cert data from /public/certs.json
-const [external, setExternal] = useState({
-  certs: [],
-  defaults: { flashcards: {}, quiz: {} }
-});
 
-useEffect(() => {
-  fetch("/certs.json")
-    .then(r => (r.ok ? r.json() : Promise.reject()))
-    .then(data => setExternal(data))
-    .catch(() => {}); // ignore if certs.json is missing
-}, []);
+  // external certs
+  const [external, setExternal] = useState({ certs: [], defaults: { flashcards: {}, quiz: {} } });
+  useEffect(() => {
+    fetch("/certs.json")
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(data => setExternal(data))
+      .catch(() => {});
+  }, []);
 
-// merge built-in and external certs
-const ALL_CERTS = useMemo(
-  () => [...BASE_CERTS, ...(external.certs || [])],
-  [external]
-);
+  const ALL_CERTS = useMemo(() => [...BASE_CERTS, ...(external.certs || [])], [external]);
 
-// recompute vendors, domains, levels using ALL_CERTS
-const allVendors = useMemo(
-  () => unique(ALL_CERTS.map(c => c.vendor)).sort(),
-  [ALL_CERTS]
-);
-const allDomains = useMemo(
-  () => unique(ALL_CERTS.flatMap(c => c.domains)).sort(),
-  [ALL_CERTS]
-);
-const allLevels = useMemo(
-  () => unique(ALL_CERTS.map(c => c.level)),
-  [ALL_CERTS]
-);
-
+  const allVendors = useMemo(() => unique(ALL_CERTS.map(c => c.vendor)).sort(), [ALL_CERTS]);
+  const allDomains = useMemo(() => unique(ALL_CERTS.flatMap(c => c.domains)).sort(), [ALL_CERTS]);
+  const allLevels  = useMemo(() => unique(ALL_CERTS.map(c => c.level)), [ALL_CERTS]);
 
   // load
   useEffect(() => {
@@ -339,7 +342,6 @@ const allLevels = useMemo(
     const id = setInterval(() => {
       setPomodoro(p => {
         if (p.seconds > 0) return { ...p, seconds: p.seconds - 1 };
-        // switch mode
         if (p.mode === "focus") return { running:false, seconds: 5*60, mode: "break" };
         return { running:false, seconds: 25*60, mode: "focus" };
       });
@@ -354,7 +356,7 @@ const allLevels = useMemo(
       (level === "all" || c.level === level) &&
       (!q || (c.name.toLowerCase().includes(q.toLowerCase()) || c.skills?.some(s => s.includes(q.toLowerCase()))))
     ));
-  }, [q, vendor, domain, level]);
+  }, [q, vendor, domain, level, ALL_CERTS]);
 
   const toggleFavorite = (id) => setFavorites(f => f.includes(id) ? f.filter(x=>x!==id) : [...f, id]);
   const addToPlan = (id) => setPlan(p => ({ ...p, [id]: p[id] || { targetDate: "", progress: 0, notes: "" } }));
@@ -363,7 +365,9 @@ const allLevels = useMemo(
   const certById = (id) => ALL_CERTS.find(c => c.id === id);
 
   // Flashcards helpers
-  const getFlashcards = (id) => certById(id)?.flashcards || DEFAULT_FLASHCARDS[id] || [];
+  const getFlashcards = (id) =>
+    certById(id)?.flashcards || external.defaults?.flashcards?.[id] || DEFAULT_FLASHCARDS[id] || [];
+
   const nextFlash = (id, know) => {
     const cards = getFlashcards(id);
     if (!cards.length) return;
@@ -376,7 +380,9 @@ const allLevels = useMemo(
   };
 
   // Quiz helpers
-  const getQuiz = (id) => certById(id)?.quiz || DEFAULT_QUIZ[id] || [];
+  const getQuiz = (id) =>
+    certById(id)?.quiz || external.defaults?.quiz?.[id] || DEFAULT_QUIZ[id] || [];
+
   const answerQuiz = (id, choice) => {
     const items = getQuiz(id);
     setQuizState(qs => {
@@ -397,33 +403,31 @@ const allLevels = useMemo(
     a.href = url; a.download = "it-cert-study-data.json"; a.click();
     URL.revokeObjectURL(url);
   };
-  const importData = async (file) => {
-  const text = await file.text();
-  try {
-    const obj = JSON.parse(text);
-    setFavorites(obj.favorites || []);
-    setPlan(obj.plan || []);
-    setPomodoro(obj.pomodoro || { running: false, seconds: 25 * 60, mode: "focus" });
-    setFcProgress(obj.fcProgress || {});
-    setQuizState(obj.quizState || {});
-  } catch (err) {
-    console.error(err);
-    alert("Invalid JSON file");
-  }
-};
 
+  const importData = async (file) => {
+    const text = await file.text();
+    try {
+      const obj = JSON.parse(text);
+      setFavorites(obj.favorites || []);
+      setPlan(obj.plan || {});
+      setPomodoro(obj.pomodoro || { running: false, seconds: 25 * 60, mode: "focus" });
+      setFcProgress(obj.fcProgress || {});
+      setQuizState(obj.quizState || {});
+    } catch (err) {
+      console.error(err);
+      alert("Invalid JSON file");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-gray-900">
+    <div className="min-h-screen text-gray-900" style={{ backgroundColor: BRAND_BG }}>
       {/* Header */}
       <header className="sticky top-0 z-20 border-b bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-2xl bg-black text-white grid place-items-center">
-              <GraduationCap size={18} />
-            </div>
+            <img src="https://i.imgur.com/WqdkIGU.png" alt="CertWolf Logo" className="h-10 w-auto" />
             <div>
-              <h1 className="text-xl font-bold tracking-tight">IT Cert Study Hub</h1>
+              <h1 className="text-xl font-bold tracking-tight" style={{ color: BRAND_DARK }}>CertWolf Study Hub</h1>
               <p className="text-xs text-gray-500">Plan, study, quiz, and track your progress</p>
             </div>
           </div>
@@ -436,18 +440,13 @@ const allLevels = useMemo(
                 onChange={e => {
                   const file = e.target.files && e.target.files[0];
                   if (file) importData(file);
-                  // Reset input so same file can be selected again
                   e.target.value = "";
                 }}
               />
               <Button variant="outline"><Upload size={16}/> Import</Button>
             </label>
-
             <Button variant="outline" onClick={exportData}><Download size={16}/> Export</Button>
-
             <Button variant="outline" onClick={() => setTab("plan")}><ClipboardList size={16}/> My Plan</Button>
-
-            {/* Sign out */}
             <Button variant="outline" onClick={() => supabase.auth.signOut()}>
               <X size={16}/> Sign out
             </Button>
@@ -482,7 +481,10 @@ const allLevels = useMemo(
                 <Select value={level} onChange={setLevel} options={[{value:"all", label:"All"}, ...allLevels.map(v=>({value:v,label:v}))]}/>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="subtle" onClick={() => { setVendor("all"); setDomain("all"); setLevel("all"); setQ(""); }}>
+                <Button
+                  variant="subtle"
+                  onClick={() => { setVendor("all"); setDomain("all"); setLevel("all"); setQ(""); }}
+                >
                   <RefreshCw size={16}/> Reset
                 </Button>
                 <Button variant="outline" onClick={() => setTab("roadmaps")}>
@@ -494,7 +496,7 @@ const allLevels = useMemo(
             {/* Pomodoro */}
             <Card className="mt-6 p-4">
               <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Timer size={16}/> Pomodoro</div>
-              <div className="text-3xl font-bold tabular-nums">
+              <div className="text-3xl font-bold tabular-nums" style={{ color: BRAND_DARK }}>
                 {String(Math.floor(pomodoro.seconds/60)).padStart(2,"0")}:{String(pomodoro.seconds%60).padStart(2,"0")}
               </div>
               <div className="mt-1 text-xs text-gray-500">Mode: {pomodoro.mode}</div>
@@ -502,7 +504,7 @@ const allLevels = useMemo(
                 {!pomodoro.running ? (
                   <Button onClick={()=>setPomodoro(p=>({...p, running:true}))}><Play size={16}/> Start</Button>
                 ) : (
-                  <Button onClick={()=>setPomodoro(p=>({...p, running:false}))} variant="outline"><Pause size={16}/> Pause</Button>
+                  <Button variant="outline" onClick={()=>setPomodoro(p=>({...p, running:false}))}><Pause size={16}/> Pause</Button>
                 )}
                 <Button variant="outline" onClick={()=>setPomodoro({running:false, seconds:25*60, mode:"focus"})}><RotateCcw size={16}/> Reset</Button>
               </div>
@@ -512,15 +514,19 @@ const allLevels = useMemo(
           {/* Main Panels */}
           <section className="lg:col-span-3">
             <div className="mb-4">
-              <Tabs value={tab} onChange={setTab} tabs={[
-                { value:"catalog", label:"Catalog", icon: BookOpen },
-                { value:"roadmaps", label:"Roadmaps", icon: Sparkles },
-                { value:"plan", label:"Study Plan", icon: ClipboardList },
-                { value:"flashcards", label:"Flashcards", icon: NotebookPen },
-                { value:"quiz", label:"Quizzes", icon: HelpCircle },
-                { value:"progress", label:"Progress", icon: BarChart3 },
-                { value:"tools", label:"Tools", icon: Settings },
-              ]} />
+              <Tabs
+                value={tab}
+                onChange={setTab}
+                tabs={[
+                  { value:"catalog", label:"Catalog", icon: BookOpen },
+                  { value:"roadmaps", label:"Roadmaps", icon: Sparkles },
+                  { value:"plan", label:"Study Plan", icon: ClipboardList },
+                  { value:"flashcards", label:"Flashcards", icon: NotebookPen },
+                  { value:"quiz", label:"Quizzes", icon: HelpCircle },
+                  { value:"progress", label:"Progress", icon: BarChart3 },
+                  { value:"tools", label:"Tools", icon: Settings },
+                ]}
+              />
             </div>
 
             {/* Catalog */}
@@ -534,10 +540,10 @@ const allLevels = useMemo(
                         <div className="mb-2 flex items-start justify-between gap-3">
                           <div>
                             <div className="text-sm text-gray-500">{c.vendor}</div>
-                            <h3 className="text-lg font-semibold leading-tight">{c.name}</h3>
+                            <h3 className="text-lg font-semibold leading-tight" style={{ color: BRAND_DARK }}>{c.name}</h3>
                           </div>
-                          <button onClick={()=>toggleFavorite(c.id)} className="text-gray-600 hover:text-black">
-                            {fav ? <Star size={18} className="fill-yellow-400 text-yellow-400"/> : <StarOff size={18}/>} 
+                          <button onClick={()=>toggleFavorite(c.id)} className="text-gray-600 hover:opacity-90" title={fav ? "Unfavorite" : "Favorite"}>
+                            {fav ? <Star size={18} className="fill-yellow-400 text-yellow-400"/> : <StarOff size={18}/>}
                           </button>
                         </div>
                         <div className="mb-2 flex flex-wrap gap-2">
@@ -566,7 +572,7 @@ const allLevels = useMemo(
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {ROADMAPS.map(r => (
                   <Card key={r.id} className="p-4">
-                    <div className="mb-2 text-sm font-semibold">{r.title}</div>
+                    <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>{r.title}</div>
                     <ol className="mb-3 list-decimal pl-5 text-sm">
                       {r.items.map(step => (
                         <li key={step} className="mb-1">{step}</li>
@@ -577,8 +583,8 @@ const allLevels = useMemo(
                       {r.items.map(step => {
                         const c = ALL_CERTS.find(x=>x.name===step);
                         return (
-                          <Button key={step} size="sm" variant={plan[c?.id] ? "subtle" : "outline"} onClick={()=> c && addToPlan(c.id)}>
-                            <Plus size={14}/> Add {c?.vendor}
+                          <Button key={step} size="sm" variant={c && plan[c.id] ? "subtle" : "outline"} onClick={()=> c && addToPlan(c.id)}>
+                            <Plus size={14}/> Add {c?.vendor || ""}
                           </Button>
                         );
                       })}
@@ -602,8 +608,16 @@ const allLevels = useMemo(
                       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <div className="text-xs text-gray-500">{c.vendor} - {c.level}</div>
-                          <div className="text-lg font-semibold">{c.name}</div>
-                          <div className="mt-1 text-xs text-gray-500">Target: <input type="date" value={meta.targetDate} onChange={e=>setPlan(p=>({...p, [id]:{...p[id], targetDate:e.target.value}}))} className="rounded border px-1 py-0.5"/></div>
+                          <div className="text-lg font-semibold" style={{ color: BRAND_DARK }}>{c.name}</div>
+                          <div className="mt-1 text-xs text-gray-500">
+                            Target:{" "}
+                            <input
+                              type="date"
+                              value={meta.targetDate}
+                              onChange={e=>setPlan(p=>({...p, [id]:{...p[id], targetDate:e.target.value}}))}
+                              className="rounded border px-1 py-0.5"
+                            />
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button variant="outline" onClick={()=>setActiveCert(c)} size="sm"><FileText size={16}/> Details</Button>
@@ -617,7 +631,10 @@ const allLevels = useMemo(
                           <div className="flex items-center gap-2">
                             <Button size="sm" variant="subtle" onClick={()=>setPlan(p=>({...p, [id]:{...p[id], progress: Math.max(0, (p[id].progress||0) - 5)}}))}><Minus size={14}/></Button>
                             <div className="w-full rounded-full bg-gray-200">
-                              <div className="h-3 rounded-full bg-[#6D8196]" style={{ width: `${meta.progress||0}%` }} />
+                              <div
+                                className="h-3 rounded-full"
+                                style={{ width: `${meta.progress||0}%`, backgroundColor: BRAND_BLUE }}
+                              />
                             </div>
                             <Button size="sm" variant="subtle" onClick={()=>setPlan(p=>({...p, [id]:{...p[id], progress: Math.min(100, (p[id].progress||0) + 5)}}))}><Plus size={14}/></Button>
                             <div className="w-10 text-right text-sm tabular-nums">{meta.progress||0}%</div>
@@ -625,7 +642,12 @@ const allLevels = useMemo(
                         </div>
                         <div>
                           <div className="mb-1 text-xs font-semibold">Notes</div>
-                          <textarea value={meta.notes} onChange={e=>setPlan(p=>({...p, [id]:{...p[id], notes:e.target.value}}))} className="h-24 w-full rounded-xl border p-2 text-sm" placeholder="Key topics, weak spots, next steps" />
+                          <textarea
+                            value={meta.notes}
+                            onChange={e=>setPlan(p=>({...p, [id]:{...p[id], notes:e.target.value}}))}
+                            className="h-24 w-full rounded-xl border p-2 text-sm"
+                            placeholder="Key topics, weak spots, next steps"
+                          />
                         </div>
                         <div>
                           <div className="mb-1 text-xs font-semibold">Quick Actions</div>
@@ -647,7 +669,11 @@ const allLevels = useMemo(
               <Card className="p-4">
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <div className="text-sm font-semibold">Choose a cert</div>
-                  <Select value={activeCert?.id || Object.keys(plan)[0] || ALL_CERTS[0].id} onChange={val=>setActiveCert(certById(val))} options={ALL_CERTS.map(c=>({value:c.id,label:c.name}))} />
+                  <Select
+                    value={activeCert?.id || Object.keys(plan)[0] || ALL_CERTS[0]?.id}
+                    onChange={val=>setActiveCert(certById(val))}
+                    options={ALL_CERTS.map(c=>({value:c.id,label:c.name}))}
+                  />
                 </div>
                 {activeCert ? (
                   <Flashcards cert={activeCert} getFlashcards={getFlashcards} next={nextFlash} fcProgress={fcProgress[activeCert.id]}/>
@@ -662,7 +688,11 @@ const allLevels = useMemo(
               <Card className="p-4">
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <div className="text-sm font-semibold">Choose a cert</div>
-                  <Select value={activeCert?.id || Object.keys(plan)[0] || CERTS[0].id} onChange={val=>setActiveCert(certById(val))} options={CERTS.map(c=>({value:c.id,label:c.name}))} />
+                  <Select
+                    value={activeCert?.id || Object.keys(plan)[0] || ALL_CERTS[0]?.id}
+                    onChange={val=>setActiveCert(certById(val))}
+                    options={ALL_CERTS.map(c=>({value:c.id,label:c.name}))}
+                  />
                 </div>
                 {activeCert ? (
                   <Quiz cert={activeCert} getQuiz={getQuiz} quizState={quizState[activeCert.id]} onAnswer={choice=>answerQuiz(activeCert.id, choice)} />
@@ -675,7 +705,7 @@ const allLevels = useMemo(
             {/* Progress */}
             {tab === "progress" && (
               <Card className="p-6">
-                <div className="mb-4 text-lg font-semibold">Overview</div>
+                <div className="mb-4 text-lg font-semibold" style={{ color: BRAND_DARK }}>Overview</div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <Stat label="In Plan" value={Object.keys(plan).length} />
                   <Stat label="Favorites" value={favorites.length} />
@@ -687,7 +717,10 @@ const allLevels = useMemo(
                       <div key={id} className="flex items-center gap-3">
                         <div className="w-56 truncate text-sm">{certById(id)?.name}</div>
                         <div className="h-3 w-full rounded-full bg-gray-200">
-                          <div className="h-3 rounded-full bg-black" style={{ width: `${meta.progress||0}%` }} />
+                          <div
+                            className="h-3 rounded-full"
+                            style={{ width: `${meta.progress||0}%`, backgroundColor: BRAND_DARK }}
+                          />
                         </div>
                         <div className="w-12 text-right text-sm tabular-nums">{meta.progress||0}%</div>
                       </div>
@@ -702,7 +735,7 @@ const allLevels = useMemo(
             {tab === "tools" && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Card className="p-4">
-                  <div className="mb-2 text-sm font-semibold">Exam Day Checklist</div>
+                  <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>Exam Day Checklist</div>
                   <ul className="list-disc pl-5 text-sm">
                     <li>Two forms of ID</li>
                     <li>Confirm test center rules or online proctoring</li>
@@ -712,15 +745,15 @@ const allLevels = useMemo(
                   </ul>
                 </Card>
                 <Card className="p-4">
-                  <div className="mb-2 text-sm font-semibold">Acronym Drill</div>
+                  <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>Acronym Drill</div>
                   <AcronymDrill />
                 </Card>
                 <Card className="p-4">
-                  <div className="mb-2 text-sm font-semibold">Common Ports</div>
+                  <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>Common Ports</div>
                   <PortsDrill />
                 </Card>
                 <Card className="p-4">
-                  <div className="mb-2 text-sm font-semibold">Quick Notes</div>
+                  <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>Quick Notes</div>
                   <QuickNotes />
                 </Card>
               </div>
@@ -738,83 +771,85 @@ const allLevels = useMemo(
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <div className="text-xs text-gray-500">{activeCert.vendor} - {activeCert.level}</div>
-                    <div className="text-xl font-semibold">{activeCert.name}</div>
+                    <div className="text-xl font-semibold" style={{ color: BRAND_DARK }}>{activeCert.name}</div>
                   </div>
                   <Button variant="outline" onClick={()=>setActiveCert(null)}><X size={16}/> Close</Button>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="md:col-span-2">
-                    <div className="mb-2 text-sm font-semibold">Skills</div>
+                    <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>Skills</div>
                     <div className="mb-4 flex flex-wrap gap-2">
                       {activeCert.skills?.map(s => <Badge key={s} className="border-gray-300 bg-gray-50">{s}</Badge>)}
                     </div>
                     {!!activeCert.resources?.length && (
                       <div>
-                        <div className="mb-2 text-sm font-semibold">Recommended Resources</div>
+                        <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>Recommended Resources</div>
                         <ul className="space-y-2 text-sm">
                           {activeCert.resources.map(r => (
                             <li key={r.url} className="flex items-center justify-between gap-2">
                               <span>{r.title} <span className="text-xs text-gray-500">({r.type})</span></span>
-                              <a href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">Open <ExternalLink size={14}/></a>
+                              <a
+                                href={r.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 hover:underline"
+                                style={{ color: BRAND_BLUE }}
+                              >
+                                Open <ExternalLink size={14}/>
+                              </a>
                             </li>
-							                  ))}
-                </ul>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>At a glance</div>
+                    <ul className="space-y-1 text-sm text-gray-700">
+                      <li>Domain: {activeCert.domains.join(", ")}</li>
+                      <li>Level: {activeCert.level}</li>
+                      <li>Time: ~{activeCert.estHours} hours</li>
+                    </ul>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button size="sm" onClick={() => addToPlan(activeCert.id)}>
+                        <FolderPlus size={16} /> Add to Plan
+                      </Button>
+                      {!!getFlashcards(activeCert.id).length && (
+                        <Button size="sm" variant="outline" onClick={() => setTab("flashcards")}>
+                          <NotebookPen size={16} /> Flashcards
+                        </Button>
+                      )}
+                      {!!getQuiz(activeCert.id).length && (
+                        <Button size="sm" variant="outline" onClick={() => setTab("quiz")}>
+                          <HelpCircle size={16} /> Quiz
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          <div>
-            <div className="mb-2 text-sm font-semibold">At a glance</div>
-            <ul className="space-y-1 text-sm text-gray-700">
-              <li>Domain: {activeCert.domains.join(", ")}</li>
-              <li>Level: {activeCert.level}</li>
-              <li>Time: ~{activeCert.estHours} hours</li>
-            </ul>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => addToPlan(activeCert.id)}>
-                <FolderPlus size={16} /> Add to Plan
-              </Button>
-              {!!getFlashcards(activeCert.id).length && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setTab("flashcards")}
-                >
-                  <NotebookPen size={16} /> Flashcards
-                </Button>
-              )}
-              {!!getQuiz(activeCert.id).length && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setTab("quiz")}
-                >
-                  <HelpCircle size={16} /> Quiz
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  </motion.div>
-)}
-</AnimatePresence>
-
-{/* Footer */}
-<footer className="mx-auto max-w-7xl px-4 py-8 text-center text-xs text-gray-500">
-  Built for focused study. Save your data with Export, and load it anywhere with Import.
-</footer>
-</div>
-);
+      {/* Footer */}
+      <footer className="mx-auto max-w-7xl px-4 py-8 text-center text-xs text-gray-500">
+        Built for focused study. Save your data with Export, and load it anywhere with Import.
+      </footer>
+    </div>
+  );
 }
 
-// ---------- Helper Components ----------
+/** =========================================================
+ * Helper Components
+ * ======================================================= */
 function Stat({ label, value }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4">
       <div className="text-xs text-gray-500">{label}</div>
-      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-2xl font-bold" style={{ color: BRAND_DARK }}>{value}</div>
     </div>
   );
 }
@@ -837,7 +872,7 @@ function Flashcards({ cert, getFlashcards, next, fcProgress }) {
       </div>
       <Card className="p-6">
         <div className="mb-2 text-xs font-semibold text-gray-500">Question</div>
-        <div className="text-lg font-semibold">{card.q}</div>
+        <div className="text-lg font-semibold" style={{ color: BRAND_DARK }}>{card.q}</div>
 
         {show && (
           <div className="mt-4 rounded-xl border bg-gray-50 p-4 text-sm">
@@ -857,7 +892,7 @@ function Flashcards({ cert, getFlashcards, next, fcProgress }) {
             </Button>
           )}
           <Button
-            variant="success"
+            variant="accent"
             onClick={() => {
               setShow(false);
               next(cert.id, true);
@@ -902,7 +937,7 @@ function Quiz({ cert, getQuiz, quizState = {}, onAnswer }) {
         {cert.name} • Question {idx + 1} of {items.length}
       </div>
       <Card className="p-6">
-        <div className="mb-3 text-base font-semibold">{item.q}</div>
+        <div className="mb-3 text-base font-semibold" style={{ color: BRAND_DARK }}>{item.q}</div>
         <div className="grid gap-2 sm:grid-cols-2">
           {item.options.map((opt, i) => (
             <Button key={i} variant="outline" onClick={() => onAnswer(i)}>
@@ -951,7 +986,7 @@ function AcronymDrill() {
 
   return (
     <div>
-      <div className="text-lg font-semibold">{item[0]}</div>
+      <div className="text-lg font-semibold" style={{ color: BRAND_DARK }}>{item[0]}</div>
       {show && <div className="mt-2 rounded-xl border bg-gray-50 p-3 text-sm">{item[1]}</div>}
       <div className="mt-3 flex gap-2">
         {!show ? (
@@ -1011,7 +1046,7 @@ function PortsDrill() {
   return (
     <div>
       <div className="mb-2 text-sm text-gray-600">Match the service to the correct port</div>
-      <div className="text-lg font-semibold">{q[0]}</div>
+      <div className="text-lg font-semibold" style={{ color: BRAND_DARK }}>{q[0]}</div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {options.map((o, i) => (
           <Button
@@ -1087,7 +1122,7 @@ function QuickNotes() {
   );
 }
 
-// Simple inline icons for reveal/hide so you don't need extra deps
+// Inline icons so no extra deps
 function EyeOpenIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
