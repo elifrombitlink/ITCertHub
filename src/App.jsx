@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,6 +8,20 @@ import {
   Sparkles, HelpCircle, BarChart3, Lightbulb, ArrowRight
 } from "lucide-react";
 import { supabase } from "./supabaseclient";
+// minimal dark mode
+function useDarkMode(defaultMode = "system") {
+  const [mode, setMode] = useState(() => {
+    try { return localStorage.getItem("ui:color-scheme") || defaultMode; } catch { return defaultMode; }
+  });
+  useEffect(() => {
+    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = mode === "system" ? prefersDark : mode === "dark";
+    document.documentElement.classList.toggle("dark", isDark);
+    try { localStorage.setItem("ui:color-scheme", mode); } catch {}
+  }, [mode]);
+  return { mode, setMode };
+}
+
 
 /** =========================================================
  * CertWolf Brand
@@ -296,6 +309,7 @@ const unique = (arr) => Array.from(new Set(arr));
  * Main Component
  * ======================================================= */
 export default function ITCertStudyHub() {
+  const { mode: themeMode, setMode: setThemeMode } = useDarkMode('system');
   const [tab, setTab] = useState("catalog");
   const [q, setQ] = useState("");
   const [vendor, setVendor] = useState("all");
@@ -310,14 +324,48 @@ export default function ITCertStudyHub() {
 
   // external certs
   const [external, setExternal] = useState({ certs: [], defaults: { flashcards: {}, quiz: {} } });
+  const [externalRoadmaps, setExternalRoadmaps] = useState([]);
   useEffect(() => {
-    fetch("/certs.json")
-      .then(r => (r.ok ? r.json() : Promise.reject()))
-      .then(data => setExternal(data))
-      .catch(() => {});
+    (async () => {
+      const BASE = (import.meta?.env?.BASE_URL || process.env.PUBLIC_URL || "/").replace(/\/+$/, "/");
+      try {
+        // load certs from manifest
+        const cm = await fetch(`${BASE}data/certs/manifest.json`, { cache: "no-cache" }).then(r => r.ok ? r.json() : null);
+        const certs = [];
+        if (Array.isArray(cm)) {
+          for (const entry of cm) {
+            const path = entry?.path || `${entry?.id}.json`;
+            const data = await fetch(`${BASE}data/certs/${path}`, { cache: "no-cache" }).then(r => r.ok ? r.json() : null);
+            if (data) certs.push({ ...entry, ...data });
+          }
+        } else {
+          // fallback to legacy /certs.json
+          const legacy = await fetch(`${BASE}certs.json`).then(r => r.ok ? r.json() : null);
+          if (legacy?.certs) certs.push(...legacy.certs);
+        }
+
+        // load roadmaps from manifest
+        const rm = await fetch(`${BASE}data/roadmaps/manifest.json`, { cache: "no-cache" }).then(r => r.ok ? r.json() : null);
+        const rms = [];
+        if (Array.isArray(rm)) {
+          for (const entry of rm) {
+            const path = entry?.path || `${entry?.id}.json`;
+            const data = await fetch(`${BASE}data/roadmaps/${path}`, { cache: "no-cache" }).then(r => r.ok ? r.json() : null);
+            if (data) rms.push({ ...entry, ...data });
+          }
+        }
+
+        setExternal(prev => ({ ...prev, certs }));
+        setExternalRoadmaps(rms);
+      } catch (e) {
+        // ignore on failure
+      }
+    })();
   }, []);
 
   const ALL_CERTS = useMemo(() => [...BASE_CERTS, ...(external.certs || [])], [external]);
+
+  const ALL_ROADMAPS = useMemo(() => [...ROADMAPS, ...(externalRoadmaps || [])], [externalRoadmaps]);
 
   const allVendors = useMemo(() => unique(ALL_CERTS.map(c => c.vendor)).sort(), [ALL_CERTS]);
   const allDomains = useMemo(() => unique(ALL_CERTS.flatMap(c => c.domains)).sort(), [ALL_CERTS]);
@@ -629,7 +677,7 @@ const nextFlash = (id, know) => {
             {/* Roadmaps */}
             {tab === "roadmaps" && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {ROADMAPS.map(r => (
+                {ALL_ROADMAPS.map(r => (
                   <Card key={r.id} className="p-4">
                     <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>{r.title}</div>
                     <ol className="mb-3 list-decimal pl-5 text-sm">
@@ -1219,287 +1267,4 @@ function EyeClosedIcon() {
       />
     </svg>
   );
-}
-
-
-/** ========================
- * Minimal Additions
- * ====================== */
-// Dark mode hook - minimal
-function useDarkMode(defaultMode = "system") {
-  const [mode, setMode] = React.useState(() => {
-    try { return localStorage.getItem("ui:color-scheme") || defaultMode; } catch { return defaultMode; }
-  });
-  React.useEffect(() => {
-    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isDark = mode === "system" ? prefersDark : mode === "dark";
-    document.documentElement.classList.toggle("dark", isDark);
-    try { localStorage.setItem("ui:color-scheme", mode); } catch {}
-  }, [mode]);
-  return { mode, setMode };
-}
-
-// Load JSON helper
-async function loadJSON(url) {
-  const r = await fetch(url, { cache: "no-cache" });
-  if (!r.ok) throw new Error(`Failed to load ${url}`);
-  return r.json();
-}
-
-// Practice Exam (timed) - compact
-function PracticeExam({ items = [], minutes = 90, onDone, onRecord }) {
-  const [started, setStarted] = React.useState(false);
-  const [t, setT] = React.useState(minutes * 60);
-  const [i, setI] = React.useState(0);
-  const [answers, setAnswers] = React.useState([]);
-
-  React.useEffect(() => {
-    if (!started) return;
-    const id = setInterval(() => setT((s) => (s > 0 ? s - 1 : 0)), 1000);
-    return () => clearInterval(id);
-  }, [started]);
-
-  React.useEffect(() => {
-    if (t === 0 && started) finish();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]);
-
-  const pick = (choice) => {
-    const next = [...answers, choice];
-    setAnswers(next);
-    if (i < items.length - 1) setI(i + 1);
-    else finish(next);
-  };
-
-  function finish(nextAns = answers) {
-    const total = items.length || 1;
-    const correct = nextAns.reduce((acc, c, idx) => acc + (Number(c) === Number(items[idx]?.answer) ? 1 : 0), 0);
-    const score = Math.round((100 * correct) / total);
-    onRecord && onRecord(score);
-    onDone && onDone({ correct, total, score });
-    setStarted(false);
-  }
-
-  if (!items.length) return <div className="text-sm text-gray-600">No questions available.</div>;
-  if (!started) {
-    return (
-      <div className="space-y-2">
-        <div className="text-sm text-gray-600">Timed practice exam with auto-scoring.</div>
-        <Button variant="outline" onClick={() => setStarted(true)}>Start Exam</Button>
-      </div>
-    );
-  }
-  const mm = String(Math.floor(t / 60)).padStart(2, "0");
-  const ss = String(t % 60).padStart(2, "0");
-  const q = items[i];
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between text-sm">
-        <div>Question {i + 1} / {items.length}</div>
-        <div className="font-mono">{mm}:{ss}</div>
-      </div>
-      <Card className="p-4">
-        <div className="mb-2 font-semibold" style={{ color: BRAND_DARK }}>{q.q}</div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {(q.options || []).map((opt, idx) => (
-            <Button key={idx} variant="outline" onClick={() => pick(idx)}>{opt}</Button>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-// Question Bank (search/filter)
-function QuestionBank({ items = [] }) {
-  const [s, setS] = React.useState("");
-  const [topic, setTopic] = React.useState("");
-  const [difficulty, setDifficulty] = React.useState("");
-
-  const topics = React.useMemo(() => Array.from(new Set(items.map(q => q.topic).filter(Boolean))), [items]);
-  const diffs  = React.useMemo(() => Array.from(new Set(items.map(q => String(q.difficulty)).filter(Boolean))), [items]);
-
-  const list = items.filter(q => {
-    const okS = !s || (q.q?.toLowerCase().includes(s.toLowerCase()));
-    const okT = !topic || q.topic === topic;
-    const okD = !difficulty || String(q.difficulty) === String(difficulty);
-    return okS && okT && okD;
-  });
-
-  return (
-    <div className="space-y-3">
-      <div className="grid gap-2 md:grid-cols-3">
-        <Input placeholder="Search questions..." value={s} onChange={(e)=>setS(e.target.value)} />
-        <Select value={topic} onChange={setTopic} options={[{value:"",label:"All topics"}, ...topics.map(t=>({value:t,label:t}))]} />
-        <Select value={difficulty} onChange={setDifficulty} options={[{value:"",label:"All difficulty"}, ...diffs.map(d=>({value:d,label:d}))]} />
-      </div>
-      <div className="space-y-3">
-        {list.map((q, i) => (
-          <Card key={i} className="p-3">
-            <div className="font-medium" style={{ color: BRAND_DARK }}>{q.q}</div>
-            <ul className="mt-2 list-disc pl-5 text-sm">
-              {(q.options || []).map((o, j) => <li key={j}>{o}</li>)}
-            </ul>
-            <div className="mt-2 text-xs text-gray-500">
-              {q.topic ? `Topic: ${q.topic}` : ""} {q.difficulty ? `• Difficulty: ${q.difficulty}` : ""}
-            </div>
-          </Card>
-        ))}
-        {!list.length && <div className="text-sm text-gray-600">No questions match.</div>}
-      </div>
-    </div>
-  );
-}
-
-// Randomized Quiz (lightweight)
-function RandomizedQuiz({ items = [], count = 10, onRecord }) {
-  const [set, setSet] = React.useState([]);
-  const [i, setI] = React.useState(0);
-  const [score, setScore] = React.useState(0);
-  const [done, setDone] = React.useState(false);
-
-  const start = () => {
-    const shuffled = [...items];
-    for (let k = shuffled.length - 1; k > 0; k--) {
-      const j = Math.floor(Math.random() * (k + 1));
-      [shuffled[k], shuffled[j]] = [shuffled[j], shuffled[k]];
-    }
-    setSet(shuffled.slice(0, Math.min(count, items.length)));
-    setI(0); setScore(0); setDone(false);
-  };
-
-  if (!set.length && !done) {
-    return (
-      <div className="flex items-center gap-2">
-        <Input type="number" defaultValue={count} onChange={(e)=>{}} className="w-24"/>
-        <Button variant="outline" onClick={start}>Start Random Quiz</Button>
-      </div>
-    );
-  }
-
-  if (done) {
-    const pct = Math.round(100 * (score / (set.length || 1)));
-    return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-4">
-        <div className="text-lg font-bold" style={{ color: BRAND_DARK }}>Score: {pct}%</div>
-        <Button className="mt-2" variant="outline" onClick={()=>{ setSet([]); setDone(false); }}>Again</Button>
-      </div>
-    );
-  }
-
-  const q = set[i];
-  return (
-    <Card className="p-4">
-      <div className="mb-2 font-semibold" style={{ color: BRAND_DARK }}>{q.q}</div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {(q.options || []).map((opt, idx) => (
-          <Button key={idx} variant="outline" onClick={() => {
-            if (Number(idx) === Number(q.answer)) setScore((s)=>s+1);
-            if (i < set.length - 1) setI(i + 1); else { onRecord && onRecord(Math.round(100 * ((score + (Number(idx)===Number(q.answer)?1:0)))/(set.length))); setDone(true); }
-          }}>{opt}</Button>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-// Adaptive Learning store (topic accuracy) + Mastery
-function useAdaptive(certId) {
-  const KEY = `adaptive:${certId}`;
-  const [stats, setStats] = React.useState(() => {
-    try { return JSON.parse(localStorage.getItem(KEY) || '{"topics":{}}'); } catch { return { topics: {} }; }
-  });
-
-  const record = React.useCallback((topic, correct) => {
-    const s = { ...stats, topics: { ...stats.topics } };
-    const t = s.topics[topic || "general"] || { correct: 0, total: 0 };
-    t.total += 1;
-    if (correct) t.correct += 1;
-    s.topics[topic || "general"] = t;
-    setStats(s);
-    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {}
-  }, [stats]);
-
-  const mastery = React.useMemo(() => {
-    const vals = Object.values(stats.topics);
-    if (!vals.length) return 0;
-    const avg = vals.reduce((acc, t) => acc + (t.total ? t.correct / t.total : 0), 0) / vals.length;
-    return Math.round(100 * avg);
-  }, [stats]);
-
-  const weak = React.useMemo(() => {
-    const pairs = Object.entries(stats.topics).map(([k,v]) => [k, v.total ? v.correct / v.total : 0]);
-    pairs.sort((a,b) => a[1] - b[1]);
-    return pairs.slice(0,3).map(p=>p[0]);
-  }, [stats]);
-
-  return { stats, record, mastery, weak };
-}
-
-// Spaced Repetition (SM-2-ish light)
-function useSRS(certId) {
-  const KEY = `srs:${certId}`;
-  const [map, setMap] = React.useState(() => {
-    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; }
-  });
-
-  const review = React.useCallback((cardId, quality=3) => {
-    const now = Date.now();
-    const c = { ef: 2.5, interval: 1, reps: 0, due: now, ...(map[cardId] || {}) };
-    const q = Math.max(0, Math.min(5, quality));
-    if (q < 3) {
-      c.reps = 0; c.interval = 1;
-    } else {
-      c.reps += 1;
-      if (c.reps === 1) c.interval = 1;
-      else if (c.reps === 2) c.interval = 6;
-      else c.interval = Math.round(c.interval * c.ef);
-      c.ef = Math.max(1.3, c.ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)));
-    }
-    c.due = now + c.interval * 86400000;
-    const next = { ...map, [cardId]: c };
-    setMap(next);
-    try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
-  }, [map]);
-
-  const due = React.useMemo(() => {
-    const now = Date.now();
-    return Object.entries(map).filter(([,v]) => v.due <= now).map(([id]) => id);
-  }, [map]);
-
-  return { map, review, due };
-}
-
-// Offline cache
-async function cacheForOffline(urls) {
-  if (!('caches' in window)) return false;
-  const cache = await caches.open("certwolf-v1");
-  await Promise.all(urls.map(async (u) => { try { await cache.add(u); } catch(_) {} }));
-  return true;
-}
-
-// Tiny ICS generator
-function buildICS({ title="Study Block", description="", start=Date.now()+5*60000, duration=60 }) {
-  const pad = (n) => String(n).padStart(2, "0");
-  const dt = new Date(start);
-  const y = dt.getUTCFullYear(); const m = pad(dt.getUTCMonth()+1); const d = pad(dt.getUTCDate());
-  const hh = pad(dt.getUTCHours()); const mm = pad(dt.getUTCMinutes());
-  const dtStart = `${y}${m}${d}T${hh}${mm}00Z`;
-  const end = new Date(dt.getTime() + duration*60000);
-  const y2=end.getUTCFullYear(); const m2=pad(end.getUTCMonth()+1); const d2=pad(end.getUTCDate()); const hh2=pad(end.getUTCHours()); const mm2=pad(end.getUTCMinutes());
-  const dtEnd = `${y2}${m2}${d2}T${hh2}${mm2}00Z`;
-  const ics = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//CertWolf//EN
-BEGIN:VEVENT
-UID:${Math.random().toString(36).slice(2)}@certwolf.local
-DTSTAMP:${dtStart}
-DTSTART:${dtStart}
-DTEND:${dtEnd}
-SUMMARY:${title}
-DESCRIPTION:${description}
-END:VEVENT
-END:VCALENDAR`;
-  return new Blob([ics], { type: "text/calendar" });
 }
