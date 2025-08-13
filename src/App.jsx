@@ -363,21 +363,76 @@ export default function ITCertStudyHub() {
   const removeFromPlan = (id) => setPlan(p => { const n = { ...p }; delete n[id]; return n; });
 
   const certById = (id) => ALL_CERTS.find(c => c.id === id);
+  // Pick a current cert consistently everywhere
+const currentCertId = useMemo(
+  () => activeCert?.id || Object.keys(plan)[0] || ALL_CERTS[0]?.id,
+  [activeCert, plan, ALL_CERTS]
+);
+const currentCert = useMemo(
+  () => (currentCertId ? certById(currentCertId) : null),
+  [currentCertId, ALL_CERTS]
+);
 
-  // Flashcards helpers
-  const getFlashcards = (id) =>
-    certById(id)?.flashcards || external.defaults?.flashcards?.[id] || DEFAULT_FLASHCARDS[id] || [];
+// Keep activeCert initialized when page loads or plan changes
+useEffect(() => {
+  if (!activeCert && currentCert) setActiveCert(currentCert);
+}, [currentCert, activeCert]);
 
-  const nextFlash = (id, know) => {
-    const cards = getFlashcards(id);
-    if (!cards.length) return;
-    setFcProgress(fp => {
-      const cur = fp[id] || { index: 0, known: [] };
-      const known = know ? unique([...(cur.known || []), cur.index]) : (cur.known || []);
-      const next = (cur.index + 1) % cards.length;
-      return { ...fp, [id]: { index: next, known } };
+
+// ---------------- Flashcards helpers (with debug logging) ----------------
+const DEBUG = true;
+
+const getFlashcards = (id) => {
+  const cert = certById(id);
+
+  const fromCert     = cert?.flashcards || [];
+  const fromExternal = external?.defaults?.flashcards?.[id] || [];
+  const fromDefault  = DEFAULT_FLASHCARDS?.[id] || [];
+
+  const cards =
+    fromCert.length     ? fromCert :
+    fromExternal.length ? fromExternal :
+    fromDefault.length  ? fromDefault : [];
+
+  if (DEBUG) {
+    console.groupCollapsed(`[Flashcards] resolve -> id="${id}"`);
+    console.log("certById(id):", cert);
+    console.log("source lengths:", {
+      fromCert: fromCert.length,
+      fromExternal: fromExternal.length,
+      fromDefault: fromDefault.length,
+      picked: cards.length,
     });
-  };
+    if (!cards.length) {
+      console.warn(
+        "No flashcards found. Check that the cert ID matches one of your sources exactly."
+      );
+      console.table({
+        id,
+        vendor: cert?.vendor,
+        name: cert?.name,
+      });
+    }
+    console.groupEnd();
+  }
+
+  return cards;
+};
+
+const nextFlash = (id, know) => {
+  const cards = getFlashcards(id);
+  if (!cards.length) {
+    if (DEBUG) console.warn(`[Flashcards] nextFlash skipped. No cards for id="${id}"`);
+    return;
+  }
+  setFcProgress((fp) => {
+    const cur = fp[id] || { index: 0, known: [] };
+    const known = know ? Array.from(new Set([...(cur.known || []), cur.index])) : (cur.known || []);
+    const next = (cur.index + 1) % cards.length;
+    return { ...fp, [id]: { index: next, known } };
+  });
+};
+
 
   // Quiz helpers
   const getQuiz = (id) =>
@@ -684,23 +739,32 @@ export default function ITCertStudyHub() {
             )}
 
             {/* Quiz */}
-            {tab === "quiz" && (
-              <Card className="p-4">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <div className="text-sm font-semibold">Choose a cert</div>
-                  <Select
-                    value={activeCert?.id || Object.keys(plan)[0] || ALL_CERTS[0]?.id}
-                    onChange={val=>setActiveCert(certById(val))}
-                    options={ALL_CERTS.map(c=>({value:c.id,label:c.name}))}
-                  />
-                </div>
-                {activeCert ? (
-                  <Quiz cert={activeCert} getQuiz={getQuiz} quizState={quizState[activeCert.id]} onAnswer={choice=>answerQuiz(activeCert.id, choice)} />
-                ) : (
-                  <div className="text-sm text-gray-600">Add a cert to your plan first.</div>
-                )}
-              </Card>
-            )}
+{tab === "quiz" && (
+  <Card className="p-4">
+    <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="text-sm font-semibold">Choose a cert</div>
+      <Select
+        value={currentCertId}
+        onChange={(val) => setActiveCert(certById(val))}
+        options={ALL_CERTS.map((c) => ({ value: c.id, label: c.name }))}
+      />
+    </div>
+
+    {currentCert ? (
+      <Quiz
+        cert={currentCert}
+        getQuiz={getQuiz}
+        quizState={quizState[currentCert.id]}
+        onAnswer={(choice) => answerQuiz(currentCert.id, choice)}
+      />
+    ) : (
+      Object.keys(plan).length === 0 && (
+        <div className="text-sm text-gray-600">Add a cert to your plan first.</div>
+      )
+    )}
+  </Card>
+)}
+
 
             {/* Progress */}
             {tab === "progress" && (
@@ -937,7 +1001,9 @@ function Quiz({ cert, getQuiz, quizState = {}, onAnswer }) {
         {cert.name} • Question {idx + 1} of {items.length}
       </div>
       <Card className="p-6">
-        <div className="mb-3 text-base font-semibold" style={{ color: BRAND_DARK }}>{item.q}</div>
+        <div className="mb-3 text-base font-semibold" style={{ color: BRAND_DARK }}>
+          {item.q}
+        </div>
         <div className="grid gap-2 sm:grid-cols-2">
           {item.options.map((opt, i) => (
             <Button key={i} variant="outline" onClick={() => onAnswer(i)}>
