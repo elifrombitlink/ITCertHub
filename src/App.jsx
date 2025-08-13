@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Filter, Star, StarOff, BookOpen, Timer,
@@ -8,7 +8,6 @@ import {
   Sparkles, HelpCircle, BarChart3, Lightbulb, ArrowRight
 } from "lucide-react";
 import { supabase } from "./supabaseclient";
-import { useCertDataLoader } from "./CertDataLoader";
 
 /** =========================================================
  * CertWolf Brand
@@ -296,9 +295,6 @@ const unique = (arr) => Array.from(new Set(arr));
  * Main Component
  * ======================================================= */
 export default function ITCertStudyHub() {
-  // Load external certs/roadmaps from /public/data manifests via loader
-  const { certs: loaderCerts = [], roadmaps: loaderRoadmaps = [], loading: dataLoading, error: dataError } = useCertDataLoader();
-
   const [tab, setTab] = useState("catalog");
   const [q, setQ] = useState("");
   const [vendor, setVendor] = useState("all");
@@ -320,10 +316,9 @@ export default function ITCertStudyHub() {
       .catch(() => {});
   }, []);
 
-  const ALL_CERTS = useMemo(() => [...BASE_CERTS, ...(external.certs || []), ...(loaderCerts || [])], [external, loaderCerts]);
+  const ALL_CERTS = useMemo(() => [...BASE_CERTS, ...(external.certs || [])], [external]);
 
   const allVendors = useMemo(() => unique(ALL_CERTS.map(c => c.vendor)).sort(), [ALL_CERTS]);
-  const ALL_ROADMAPS = useMemo(() => [...ROADMAPS, ...(loaderRoadmaps || [])], [loaderRoadmaps]);
   const allDomains = useMemo(() => unique(ALL_CERTS.flatMap(c => c.domains)).sort(), [ALL_CERTS]);
   const allLevels  = useMemo(() => unique(ALL_CERTS.map(c => c.level)), [ALL_CERTS]);
 
@@ -379,9 +374,17 @@ const currentCert = useMemo(
 );
 
 // Keep activeCert initialized when page loads or plan changes
+  const didInitActive = useRef(false);
 useEffect(() => {
-  if (!activeCert && currentCert) setActiveCert(currentCert);
-}, [currentCert, activeCert]);
+  if (didInitActive.current) return;
+
+// unified close handler for the details drawer
+  const handleCloseDrawer = useCallback(() => {
+    setActiveCert(null);
+  }, []);
+
+  if (currentCert) { setActiveCert(currentCert); didInitActive.current = true; }
+}, [currentCert]);
 
 
 // ---------------- Flashcards helpers (with debug logging) ----------------
@@ -537,8 +540,6 @@ const nextFlash = (id, know) => {
                 <Select value={domain} onChange={setDomain} options={[{value:"all", label:"All"}, ...allDomains.map(v=>({value:v,label:v}))]}/>
               </div>
               <div className="mb-4">
-              {dataLoading && <div className="text-xs text-gray-500">Loading extra certs…</div>}
-              {dataError && <div className="text-xs text-red-600">Data load failed: {String(dataError)}</div>}
                 <div className="mb-1 text-xs font-semibold">Level</div>
                 <Select value={level} onChange={setLevel} options={[{value:"all", label:"All"}, ...allLevels.map(v=>({value:v,label:v}))]}/>
               </div>
@@ -576,8 +577,6 @@ const nextFlash = (id, know) => {
           {/* Main Panels */}
           <section className="lg:col-span-3">
             <div className="mb-4">
-              {dataLoading && <div className="text-xs text-gray-500">Loading extra certs…</div>}
-              {dataError && <div className="text-xs text-red-600">Data load failed: {String(dataError)}</div>}
               <Tabs
                 value={tab}
                 onChange={setTab}
@@ -634,7 +633,7 @@ const nextFlash = (id, know) => {
             {/* Roadmaps */}
             {tab === "roadmaps" && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {ALL_ROADMAPS.map(r => (
+                {ROADMAPS.map(r => (
                   <Card key={r.id} className="p-4">
                     <div className="mb-2 text-sm font-semibold" style={{ color: BRAND_DARK }}>{r.title}</div>
                     <ol className="mb-3 list-decimal pl-5 text-sm">
@@ -645,7 +644,7 @@ const nextFlash = (id, know) => {
                     <div className="mb-3 text-xs text-gray-600">{r.note}</div>
                     <div className="flex flex-wrap gap-2">
                       {r.items.map(step => {
-                        const c = ALL_CERTS.find(x=>x.id===step) || ALL_CERTS.find(x=>x.name===step);
+                        const c = ALL_CERTS.find(x=>x.name===step);
                         return (
                           <Button key={step} size="sm" variant={c && plan[c.id] ? "subtle" : "outline"} onClick={()=> c && addToPlan(c.id)}>
                             <Plus size={14}/> Add {c?.vendor || ""}
@@ -838,7 +837,7 @@ const nextFlash = (id, know) => {
       {/* Details Drawer */}
       <AnimatePresence>
         {activeCert && (
-          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-30 bg-black/30" onClick={()=>setActiveCert(null)}>
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-30 bg-black/30" onClick={handleCloseDrawer}>
             <motion.div initial={{y:50, opacity:0}} animate={{y:0, opacity:1}} exit={{y:50, opacity:0}} transition={{type:"spring", damping:20}} className="absolute inset-x-0 bottom-0 max-h-[80vh] rounded-t-3xl bg-white p-6 shadow-xl" onClick={e=>e.stopPropagation()}>
               <div className="mx-auto max-w-4xl">
                 <div className="mb-3 flex items-start justify-between gap-3">
@@ -846,7 +845,7 @@ const nextFlash = (id, know) => {
                     <div className="text-xs text-gray-500">{activeCert.vendor} - {activeCert.level}</div>
                     <div className="text-xl font-semibold" style={{ color: BRAND_DARK }}>{activeCert.name}</div>
                   </div>
-                  <Button variant="outline" onClick={()=>setActiveCert(null)}><X size={16}/> Close</Button>
+                  <Button variant="outline" onClick={handleCloseDrawer}><X size={16}/> Close</Button>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="md:col-span-2">
