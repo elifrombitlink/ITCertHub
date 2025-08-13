@@ -373,19 +373,14 @@ const currentCert = useMemo(
   [currentCertId, ALL_CERTS]
 );
 
-// Keep activeCert initialized when page loads or plan changes
-  const didInitActive = useRef(false);
+const didInitActive = useRef(false);
+const handleCloseDrawer = useCallback(() => { setActiveCert(null); }, []);
+
+// Keep activeCert initialized once on first load
 useEffect(() => {
   if (didInitActive.current) return;
-
-// unified close handler for the details drawer
-  const handleCloseDrawer = useCallback(() => {
-    setActiveCert(null);
-  }, []);
-
   if (currentCert) { setActiveCert(currentCert); didInitActive.current = true; }
 }, [currentCert]);
-
 
 // ---------------- Flashcards helpers (with debug logging) ----------------
 const DEBUG = true;
