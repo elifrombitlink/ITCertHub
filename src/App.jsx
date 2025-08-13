@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Filter, Star, StarOff, BookOpen, Timer,
@@ -303,6 +303,7 @@ export default function ITCertStudyHub() {
   const [favorites, setFavorites] = useState([]);
   const [plan, setPlan] = useState({}); // certId -> {targetDate, progress:0-100, notes:""}
   const [activeCert, setActiveCert] = useState(null);
+  const [closedForCertId, setClosedForCertId] = useState(null);
   const [pomodoro, setPomodoro] = useState({ running:false, seconds: 25*60, mode: "focus" });
   const [fcProgress, setFcProgress] = useState({}); // certId -> {index, known:Set}
   const [quizState, setQuizState] = useState({}); // certId -> {idx, correct, answers:[]}
@@ -330,11 +331,12 @@ export default function ITCertStudyHub() {
     setPomodoro(s.pomodoro || { running:false, seconds:25*60, mode:"focus" });
     setFcProgress(s.fcProgress || {});
     setQuizState(s.quizState || {});
+    if (s.ui?.tab) setTab(s.ui.tab);
   }, []);
 
   useEffect(() => {
-    saveState({ favorites, plan, pomodoro, fcProgress, quizState });
-  }, [favorites, plan, pomodoro, fcProgress, quizState]);
+    saveState({ favorites, plan, pomodoro, fcProgress, quizState, ui: { tab } });
+  }, [favorites, plan, pomodoro, fcProgress, quizState, tab]);
 
   // timer
   useEffect(() => {
@@ -350,11 +352,12 @@ export default function ITCertStudyHub() {
   }, [pomodoro.running]);
 
   const filtered = useMemo(() => {
+    const qLower = q.toLowerCase();
     return ALL_CERTS.filter(c => (
       (vendor === "all" || c.vendor === vendor) &&
       (domain === "all" || c.domains.includes(domain)) &&
       (level === "all" || c.level === level) &&
-      (!q || (c.name.toLowerCase().includes(q.toLowerCase()) || c.skills?.some(s => s.includes(q.toLowerCase()))))
+      (!q || (c.name.toLowerCase().includes(qLower) || c.skills?.some(s => String(s).toLowerCase().includes(qLower))))
     ));
   }, [q, vendor, domain, level, ALL_CERTS]);
 
@@ -364,75 +367,114 @@ export default function ITCertStudyHub() {
 
   const certById = (id) => ALL_CERTS.find(c => c.id === id);
   // Pick a current cert consistently everywhere
-const currentCertId = useMemo(
-  () => activeCert?.id || Object.keys(plan)[0] || ALL_CERTS[0]?.id,
-  [activeCert, plan, ALL_CERTS]
-);
-const currentCert = useMemo(
-  () => (currentCertId ? certById(currentCertId) : null),
-  [currentCertId, ALL_CERTS]
-);
+  const currentCertId = useMemo(
+    () => activeCert?.id || Object.keys(plan)[0] || ALL_CERTS[0]?.id,
+    [activeCert, plan, ALL_CERTS]
+  );
+  const currentCert = useMemo(
+    () => (currentCertId ? certById(currentCertId) : null),
+    [currentCertId, ALL_CERTS]
+  );
 
-// Keep activeCert initialized when page loads or plan changes
-useEffect(() => {
-  if (!activeCert && currentCert) setActiveCert(currentCert);
-}, [currentCert, activeCert]);
+  // Keep activeCert initialized when page loads or plan changes
+  const didInitActive = useRef(false);
 
-
-// ---------------- Flashcards helpers (with debug logging) ----------------
-const DEBUG = true;
-
-const getFlashcards = (id) => {
-  const cert = certById(id);
-
-  const fromCert     = cert?.flashcards || [];
-  const fromExternal = external?.defaults?.flashcards?.[id] || [];
-  const fromDefault  = DEFAULT_FLASHCARDS?.[id] || [];
-
-  const cards =
-    fromCert.length     ? fromCert :
-    fromExternal.length ? fromExternal :
-    fromDefault.length  ? fromDefault : [];
-
-  if (DEBUG) {
-    console.groupCollapsed(`[Flashcards] resolve -> id="${id}"`);
-    console.log("certById(id):", cert);
-    console.log("source lengths:", {
-      fromCert: fromCert.length,
-      fromExternal: fromExternal.length,
-      fromDefault: fromDefault.length,
-      picked: cards.length,
-    });
-    if (!cards.length) {
-      console.warn(
-        "No flashcards found. Check that the cert ID matches one of your sources exactly."
-      );
-      console.table({
-        id,
-        vendor: cert?.vendor,
-        name: cert?.name,
-      });
+  useEffect(() => {
+    // first-time init
+    if (!didInitActive.current && currentCert) {
+      setActiveCert(currentCert);
+      didInitActive.current = true;
+      return;
     }
-    console.groupEnd();
-  }
 
-  return cards;
-};
+    // keep closed for the same cert
+    if (!currentCert) return;
+    if (closedForCertId === currentCert.id) return;
 
-const nextFlash = (id, know) => {
-  const cards = getFlashcards(id);
-  if (!cards.length) {
-    if (DEBUG) console.warn(`[Flashcards] nextFlash skipped. No cards for id="${id}"`);
-    return;
-  }
-  setFcProgress((fp) => {
-    const cur = fp[id] || { index: 0, known: [] };
-    const known = know ? Array.from(new Set([...(cur.known || []), cur.index])) : (cur.known || []);
-    const next = (cur.index + 1) % cards.length;
-    return { ...fp, [id]: { index: next, known } };
-  });
-};
+    // auto-open when switching to a different cert/plan
+    setActiveCert(currentCert);
+  }, [currentCert, closedForCertId]);
 
+  // Close handler (used by button, overlay, and Esc key)
+  const handleCloseDrawer = () => {
+    setClosedForCertId(currentCert?.id || activeCert?.id || null);
+    setActiveCert(null);
+  };
+
+  // Esc to close
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape" && activeCert) handleCloseDrawer();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeCert, currentCertId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ---------------- Flashcards helpers (with optional debug logging) ----------------
+  const DEBUG = false;
+
+  const getFlashcards = (id) => {
+    const cert = certById(id);
+
+    const fromCert     = cert?.flashcards || [];
+    const fromExternal = external?.defaults?.flashcards?.[id] || [];
+    const fromDefault  = DEFAULT_FLASHCARDS?.[id] || [];
+
+    const cards =
+      fromCert.length     ? fromCert :
+      fromExternal.length ? fromExternal :
+      fromDefault.length  ? fromDefault : [];
+
+    if (DEBUG) {
+      console.groupCollapsed(`[Flashcards] resolve -> id="${id}"`);
+      console.log("certById(id):", cert);
+      console.log("source lengths:", {
+        fromCert: fromCert.length,
+        fromExternal: fromExternal.length,
+        fromDefault: fromDefault.length,
+        picked: cards.length,
+      });
+      if (!cards.length) {
+        console.warn(
+          "No flashcards found. Check that the cert ID matches one of your sources exactly."
+        );
+        console.table({
+          id,
+          vendor: cert?.vendor,
+          name: cert?.name,
+        });
+      }
+      console.groupEnd();
+    }
+
+    return cards;
+  };
+
+  const nextFlash = (id, know) => {
+    const cards = getFlashcards(id);
+    if (!cards.length) {
+      if (DEBUG) console.warn(`[Flashcards] nextFlash skipped. No cards for id="${id}"`);
+      return;
+    }
+    setFcProgress((fp) => {
+      const cur = fp[id] || { index: 0, known: [] };
+      const known = know ? Array.from(new Set([...(cur.known || []), cur.index])) : (cur.known || []);
+      const next = (cur.index + 1) % cards.length;
+      return { ...fp, [id]: { index: next, known } };
+    });
+  };
+
+  // Flashcard extra controls
+  const resetFlash = (id) => setFcProgress(fp => ({ ...fp, [id]: { index: 0, known: [] } }));
+  const shuffleFlash = (id) => {
+    const cards = getFlashcards(id);
+    if (!cards.length) return;
+    const idx = Math.floor(Math.random() * cards.length);
+    setFcProgress(fp => {
+      const cur = fp[id] || { index: 0, known: [] };
+      return { ...fp, [id]: { ...cur, index: idx } };
+    });
+  };
 
   // Quiz helpers
   const getQuiz = (id) =>
@@ -449,10 +491,11 @@ const nextFlash = (id, know) => {
       return { ...qs, [id]: { idx: nextIdx, correct, answers } };
     });
   };
+  const resetQuiz = (id) => setQuizState(qs => ({ ...qs, [id]: { idx: 0, correct: 0, answers: [] } }));
 
   // Export / Import
   const exportData = () => {
-    const blob = new Blob([JSON.stringify({ favorites, plan, pomodoro, fcProgress, quizState }, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ favorites, plan, pomodoro, fcProgress, quizState, ui: { tab } }, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = "it-cert-study-data.json"; a.click();
@@ -468,6 +511,7 @@ const nextFlash = (id, know) => {
       setPomodoro(obj.pomodoro || { running: false, seconds: 25 * 60, mode: "focus" });
       setFcProgress(obj.fcProgress || {});
       setQuizState(obj.quizState || {});
+      if (obj.ui?.tab) setTab(obj.ui.tab);
     } catch (err) {
       console.error(err);
       alert("Invalid JSON file");
@@ -707,8 +751,8 @@ const nextFlash = (id, know) => {
                         <div>
                           <div className="mb-1 text-xs font-semibold">Quick Actions</div>
                           <div className="flex flex-wrap gap-2">
-                            {!!getFlashcards(id).length && <Button size="sm" variant="outline" onClick={()=>setTab("flashcards")}><NotebookPen size={16}/> Flashcards</Button>}
-                            {!!getQuiz(id).length && <Button size="sm" variant="outline" onClick={()=>setTab("quiz")}><HelpCircle size={16}/> Quiz</Button>}
+                            {!!getFlashcards(id).length && <Button size="sm" variant="outline" onClick={()=>{setActiveCert(c); setTab("flashcards");}}><NotebookPen size={16}/> Flashcards</Button>}
+                            {!!getQuiz(id).length && <Button size="sm" variant="outline" onClick={()=>{setActiveCert(c); setTab("quiz");}}><HelpCircle size={16}/> Quiz</Button>}
                             <Button size="sm" variant="outline" onClick={()=>window.print()}><FileText size={16}/> Print Plan</Button>
                           </div>
                         </div>
@@ -729,6 +773,12 @@ const nextFlash = (id, know) => {
                     onChange={val=>setActiveCert(certById(val))}
                     options={ALL_CERTS.map(c=>({value:c.id,label:c.name}))}
                   />
+                  {activeCert && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="subtle" onClick={()=>shuffleFlash(activeCert.id)}>Shuffle</Button>
+                      <Button size="sm" variant="outline" onClick={()=>resetFlash(activeCert.id)}>Reset</Button>
+                    </div>
+                  )}
                 </div>
                 {activeCert ? (
                   <Flashcards cert={activeCert} getFlashcards={getFlashcards} next={nextFlash} fcProgress={fcProgress[activeCert.id]}/>
@@ -739,31 +789,34 @@ const nextFlash = (id, know) => {
             )}
 
             {/* Quiz */}
-{tab === "quiz" && (
-  <Card className="p-4">
-    <div className="mb-3 flex flex-wrap items-center gap-2">
-      <div className="text-sm font-semibold">Choose a cert</div>
-      <Select
-        value={currentCertId}
-        onChange={(val) => setActiveCert(certById(val))}
-        options={ALL_CERTS.map((c) => ({ value: c.id, label: c.name }))}
-      />
-    </div>
+            {tab === "quiz" && (
+              <Card className="p-4">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <div className="text-sm font-semibold">Choose a cert</div>
+                  <Select
+                    value={currentCertId}
+                    onChange={(val) => setActiveCert(certById(val))}
+                    options={ALL_CERTS.map((c) => ({ value: c.id, label: c.name }))}
+                  />
+                  {currentCert && (
+                    <Button size="sm" variant="outline" onClick={()=>resetQuiz(currentCert.id)}>Reset Quiz</Button>
+                  )}
+                </div>
 
-    {currentCert ? (
-      <Quiz
-        cert={currentCert}
-        getQuiz={getQuiz}
-        quizState={quizState[currentCert.id]}
-        onAnswer={(choice) => answerQuiz(currentCert.id, choice)}
-      />
-    ) : (
-      Object.keys(plan).length === 0 && (
-        <div className="text-sm text-gray-600">Add a cert to your plan first.</div>
-      )
-    )}
-  </Card>
-)}
+                {currentCert ? (
+                  <Quiz
+                    cert={currentCert}
+                    getQuiz={getQuiz}
+                    quizState={quizState[currentCert.id]}
+                    onAnswer={(choice) => answerQuiz(currentCert.id, choice)}
+                  />
+                ) : (
+                  Object.keys(plan).length === 0 && (
+                    <div className="text-sm text-gray-600">Add a cert to your plan first.</div>
+                  )
+                )}
+              </Card>
+            )}
 
 
             {/* Progress */}
@@ -829,7 +882,7 @@ const nextFlash = (id, know) => {
       {/* Details Drawer */}
       <AnimatePresence>
         {activeCert && (
-          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-30 bg-black/30" onClick={()=>setActiveCert(null)}>
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-30 bg-black/30" onClick={handleCloseDrawer}>
             <motion.div initial={{y:50, opacity:0}} animate={{y:0, opacity:1}} exit={{y:50, opacity:0}} transition={{type:"spring", damping:20}} className="absolute inset-x-0 bottom-0 max-h-[80vh] rounded-t-3xl bg-white p-6 shadow-xl" onClick={e=>e.stopPropagation()}>
               <div className="mx-auto max-w-4xl">
                 <div className="mb-3 flex items-start justify-between gap-3">
@@ -837,7 +890,13 @@ const nextFlash = (id, know) => {
                     <div className="text-xs text-gray-500">{activeCert.vendor} - {activeCert.level}</div>
                     <div className="text-xl font-semibold" style={{ color: BRAND_DARK }}>{activeCert.name}</div>
                   </div>
-                  <Button variant="outline" onClick={()=>setActiveCert(null)}><X size={16}/> Close</Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleCloseDrawer}
+                    size={16}
+                  >
+                    ✕ Close
+                  </Button>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="md:col-span-2">
@@ -880,12 +939,12 @@ const nextFlash = (id, know) => {
                         <FolderPlus size={16} /> Add to Plan
                       </Button>
                       {!!getFlashcards(activeCert.id).length && (
-                        <Button size="sm" variant="outline" onClick={() => setTab("flashcards")}>
+                        <Button size="sm" variant="outline" onClick={() => { setTab("flashcards"); }}>
                           <NotebookPen size={16} /> Flashcards
                         </Button>
                       )}
                       {!!getQuiz(activeCert.id).length && (
-                        <Button size="sm" variant="outline" onClick={() => setTab("quiz")}>
+                        <Button size="sm" variant="outline" onClick={() => { setTab("quiz"); }}>
                           <HelpCircle size={16} /> Quiz
                         </Button>
                       )}
@@ -995,10 +1054,12 @@ function Quiz({ cert, getQuiz, quizState = {}, onAnswer }) {
     ? items[(idx - 1 + items.length) % items.length]
     : null;
 
+  const percent = Math.round(((quizState.correct || 0) / Math.max((quizState.answers || []).length, 1)) * 100);
+
   return (
     <div className="space-y-3">
       <div className="text-sm text-gray-600">
-        {cert.name} • Question {idx + 1} of {items.length}
+        {cert.name} • Question {idx + 1} of {items.length} • Score {isNaN(percent) ? 0 : percent}%
       </div>
       <Card className="p-6">
         <div className="mb-3 text-base font-semibold" style={{ color: BRAND_DARK }}>
