@@ -1,0 +1,13 @@
+{
+  "id": "md-102",
+  "name": "Microsoft Endpoint Administrator",
+  "vendor": "Microsoft",
+  "description": "Validates skills in deploying, configuring, securing, managing, and monitoring devices and client applications in an enterprise environment.",
+  "roadmap": [
+    "Deploy Windows client",
+    "Manage identity and access",
+    "Manage compliance policies and configuration profiles",
+    "Manage, maintain, and protect devices",
+    "Manage apps"
+  ]
+}

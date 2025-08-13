@@ -1,0 +1,12 @@
+{
+  "id": "sc-300",
+  "name": "Microsoft Identity and Access Administrator",
+  "vendor": "Microsoft",
+  "description": "Covers skills in designing, implementing, and operating an organization\u2019s identity and access management systems using Azure AD.",
+  "roadmap": [
+    "Implement an identity management solution",
+    "Implement an authentication and access management solution",
+    "Implement access management for apps",
+    "Plan and implement identity governance strategy"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+    "id": "devnet-assoc",
+    "name": "Cisco Certified DevNet Associate",
+    "vendor": "Cisco",
+    "description": "Validates knowledge of Cisco platforms, APIs, and automation workflows.",
+    "skills": [
+        "Network automation",
+        "APIs",
+        "Cisco platforms"
+    ],
+    "resources": [
+        {
+            "type": "Book",
+            "title": "Cisco DevNet Associate Official Cert Guide",
+            "url": "https://www.cisco.com"
+        },
+        {
+            "type": "Course",
+            "title": "Cisco DevNet Associate Training",
+            "url": "https://developer.cisco.com"
+        }
+    ],
+    "exam": {
+        "code": "200-901",
+        "cost": "$300",
+        "duration": "120 minutes"
+    }
+}

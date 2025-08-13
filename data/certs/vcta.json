@@ -1,0 +1,12 @@
+{
+  "id": "vcta",
+  "name": "VMware Certified Technical Associate",
+  "vendor": "VMware",
+  "description": "Covers foundational VMware skills for technical professionals.",
+  "roadmap": [
+    "Understand virtualization concepts",
+    "Navigate VMware vSphere",
+    "Deploy and manage virtual machines",
+    "Monitor and maintain virtual infrastructure"
+  ]
+}

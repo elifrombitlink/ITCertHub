@@ -1,0 +1,12 @@
+{
+  "id": "pccet",
+  "name": "Palo Alto Networks Certified Cybersecurity Entry-level Technician",
+  "vendor": "Palo Alto Networks",
+  "description": "Entry-level certification covering cybersecurity fundamentals, network security, and threat prevention.",
+  "roadmap": [
+    "Cybersecurity basics and terminology",
+    "Network security concepts",
+    "Threat analysis and prevention",
+    "Palo Alto Networks technology overview"
+  ]
+}

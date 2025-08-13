@@ -1,0 +1,12 @@
+{
+  "id": "sscp",
+  "name": "Systems Security Certified Practitioner",
+  "vendor": "ISC2",
+  "description": "Validates skills to implement, monitor, and administer IT infrastructure securely.",
+  "roadmap": [
+    "Access controls and security operations",
+    "Risk identification, monitoring, and analysis",
+    "Incident response and recovery",
+    "Cryptography and network security"
+  ]
+}

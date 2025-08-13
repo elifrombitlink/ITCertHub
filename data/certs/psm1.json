@@ -1,0 +1,12 @@
+{
+  "id": "psm1",
+  "name": "Professional Scrum Master I",
+  "vendor": "Scrum.org",
+  "description": "Validates understanding of Scrum framework, roles, and rules for effective agile delivery.",
+  "roadmap": [
+    "Scrum theory and principles",
+    "Scrum roles and responsibilities",
+    "Scrum events and artifacts",
+    "Coaching teams in Scrum adoption"
+  ]
+}

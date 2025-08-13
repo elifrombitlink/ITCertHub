@@ -1,0 +1,28 @@
+{
+    "id": "az-900",
+    "name": "Microsoft Azure Fundamentals",
+    "vendor": "Microsoft",
+    "description": "Covers basic cloud concepts, core Azure services, pricing, and support.",
+    "skills": [
+        "Azure services",
+        "Cloud concepts",
+        "Security and compliance"
+    ],
+    "resources": [
+        {
+            "type": "Course",
+            "title": "Azure Fundamentals Learning Path",
+            "url": "https://learn.microsoft.com/en-us/training/paths/azure-fundamentals/"
+        },
+        {
+            "type": "Book",
+            "title": "Exam Ref AZ-900 Microsoft Azure Fundamentals",
+            "url": "https://www.microsoftpressstore.com"
+        }
+    ],
+    "exam": {
+        "code": "AZ-900",
+        "cost": "$99",
+        "duration": "60 minutes"
+    }
+}

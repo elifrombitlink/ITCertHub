@@ -1,0 +1,24 @@
+{
+    "id": "cyberops",
+    "name": "Cisco Certified CyberOps Associate",
+    "description": "Entry-level certification focused on cybersecurity operations including security concepts, security monitoring, host-based analysis, network intrusion analysis, and incident response.",
+    "provider": "Cisco",
+    "level": "Associate",
+    "exam_code": "200-201",
+    "resources": [
+        {
+            "type": "Official Study Guide",
+            "link": "https://www.cisco.com/c/en/us/training-events/training-certifications/exams/current-list/cyberops-associate.html"
+        },
+        {
+            "type": "Practice Labs",
+            "link": "https://learningnetwork.cisco.com/s/cyberops-practice"
+        },
+        {
+            "type": "Video Training",
+            "link": "https://www.cbtnuggets.com/it-training/cisco/cyberops"
+        }
+    ],
+    "roadmap_position": "Cybersecurity Fundamentals",
+    "estimated_time_hours": 100
+}

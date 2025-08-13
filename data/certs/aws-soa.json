@@ -1,0 +1,12 @@
+{
+  "id": "aws-soa",
+  "name": "AWS Certified SysOps Administrator \u2013 Associate",
+  "vendor": "Amazon Web Services",
+  "description": "Demonstrates expertise in deploying, managing, and operating workloads on AWS.",
+  "roadmap": [
+    "Monitor and report on AWS resources",
+    "Manage AWS systems for compliance",
+    "Deploy and manage workloads",
+    "Implement security and compliance controls"
+  ]
+}

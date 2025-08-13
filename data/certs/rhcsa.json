@@ -1,0 +1,12 @@
+{
+  "id": "rhcsa",
+  "name": "Red Hat Certified System Administrator",
+  "vendor": "Red Hat",
+  "description": "Demonstrates essential skills for Red Hat Enterprise Linux system administration.",
+  "roadmap": [
+    "Install and configure Red Hat Enterprise Linux",
+    "Manage users, groups, and permissions",
+    "Configure networking and storage",
+    "Implement security and firewall rules"
+  ]
+}

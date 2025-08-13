@@ -1,0 +1,28 @@
+{
+    "id": "ms-900",
+    "name": "Microsoft 365 Fundamentals",
+    "vendor": "Microsoft",
+    "description": "Covers fundamentals of Microsoft 365 services, cloud concepts, and security.",
+    "skills": [
+        "Microsoft 365 services",
+        "Security and compliance",
+        "Cloud concepts"
+    ],
+    "resources": [
+        {
+            "type": "Course",
+            "title": "Microsoft 365 Fundamentals Learning Path",
+            "url": "https://learn.microsoft.com/en-us/training/paths/microsoft-365-fundamentals/"
+        },
+        {
+            "type": "Book",
+            "title": "Exam Ref MS-900 Microsoft 365 Fundamentals",
+            "url": "https://www.microsoftpressstore.com"
+        }
+    ],
+    "exam": {
+        "code": "MS-900",
+        "cost": "$99",
+        "duration": "60 minutes"
+    }
+}

@@ -1,0 +1,24 @@
+{
+  "roadmaps": [
+    "helpdesk-to-desktop",
+    "networking-associate",
+    "security-analyst",
+    "cloud-associate",
+    "cybersecurity-engineer",
+    "cloud-engineer",
+    "linux-systems-engineer",
+    "systems-administrator",
+    "it-manager",
+    "devops-engineer",
+    "penetration-tester",
+    "incident-responder",
+    "microsoft-365-specialist",
+    "aws-solutions-architect",
+    "cisco-networking-professional",
+    "vmware-virtualization-engineer",
+    "ai-data-engineer",
+    "iot-security-specialist",
+    "ot-scada-security-engineer",
+    "cybersecurity-policy-compliance"
+  ]
+}

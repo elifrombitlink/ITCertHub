@@ -1,0 +1,25 @@
+{
+  "id": "project+",
+  "name": "CompTIA Project+",
+  "vendor": "CompTIA",
+  "description": "Covers essential project management concepts for IT and business professionals.",
+  "roadmap": [
+    "Project initiation and planning",
+    "Project execution and delivery",
+    "Change control and documentation",
+    "Risk management",
+    "Project closure"
+  ],
+  "resources": [
+    {
+      "type": "Book",
+      "title": "CompTIA Project+ Study Guide",
+      "url": "https://www.comptia.org/certifications/project"
+    },
+    {
+      "type": "Practice Exam",
+      "title": "Project+ Practice Test",
+      "url": "https://www.examcompass.com/comptia/project-plus-certification/free-project-plus-practice-tests"
+    }
+  ]
+}

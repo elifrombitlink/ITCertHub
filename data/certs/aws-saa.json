@@ -1,0 +1,12 @@
+{
+  "id": "aws-saa",
+  "name": "AWS Certified Solutions Architect \u2013 Associate",
+  "vendor": "Amazon Web Services",
+  "description": "Validates the ability to design and deploy well-architected solutions on AWS.",
+  "roadmap": [
+    "Design resilient architectures",
+    "Design high-performing architectures",
+    "Design secure applications and architectures",
+    "Design cost-optimized architectures"
+  ]
+}

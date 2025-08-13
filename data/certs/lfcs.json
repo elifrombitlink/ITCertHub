@@ -1,0 +1,12 @@
+{
+  "id": "lfcs",
+  "name": "Linux Foundation Certified System Administrator",
+  "vendor": "Linux Foundation",
+  "description": "Validates the skills to administer Linux systems in a professional setting.",
+  "roadmap": [
+    "Linux command-line basics",
+    "User and group management",
+    "Networking and firewall configuration",
+    "Storage and file systems management"
+  ]
+}

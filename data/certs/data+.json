@@ -1,0 +1,25 @@
+{
+  "id": "data+",
+  "name": "CompTIA Data+",
+  "vendor": "CompTIA",
+  "description": "Focuses on data analytics, visualization, and governance for business decision-making.",
+  "roadmap": [
+    "Data concepts and environments",
+    "Data mining and cleaning",
+    "Data analysis and visualization",
+    "Data governance and quality",
+    "Interpreting and communicating results"
+  ],
+  "resources": [
+    {
+      "type": "Book",
+      "title": "CompTIA Data+ Study Guide",
+      "url": "https://www.comptia.org/certifications/data"
+    },
+    {
+      "type": "Video Course",
+      "title": "CompTIA Data+ Online Training",
+      "url": "https://www.udemy.com/course/comptia-data-certification/"
+    }
+  ]
+}

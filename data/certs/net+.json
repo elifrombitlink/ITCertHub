@@ -1,0 +1,35 @@
+{
+  "id": "comptia-network-plus",
+  "name": "CompTIA Network+",
+  "vendor": "CompTIA",
+  "description": "Intermediate certification covering networking concepts, infrastructure, operations, and security.",
+  "difficulty": "Intermediate",
+  "topics": [
+    "Network Architecture",
+    "Network Operations",
+    "Network Security",
+    "Troubleshooting",
+    "Industry Standards"
+  ],
+  "recommendedHours": 100,
+  "prerequisites": [
+    "CompTIA A+ or equivalent knowledge"
+  ],
+  "resources": [
+    {
+      "type": "Book",
+      "title": "CompTIA Network+ Certification All-in-One Exam Guide",
+      "link": "https://www.amazon.com/dp/1260122387"
+    },
+    {
+      "type": "Video",
+      "title": "Professor Messer's Network+ Training",
+      "link": "https://www.professormesser.com/network-plus/n10-008/free-network-plus-training-course/"
+    },
+    {
+      "type": "Practice Exam",
+      "title": "ExamCompass Network+ Practice Tests",
+      "link": "https://www.examcompass.com/comptia/network-plus-certification/free-network-plus-practice-tests"
+    }
+  ]
+}

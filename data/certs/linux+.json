@@ -1,0 +1,25 @@
+{
+  "id": "comptia-linux-plus",
+  "name": "CompTIA Linux+",
+  "vendor": "CompTIA",
+  "description": "Validates the competencies required of an early career systems administrator supporting Linux systems.",
+  "roadmap": [
+    "IT Fundamentals+",
+    "A+",
+    "Network+",
+    "Linux+"
+  ],
+  "exam": {
+    "code": "XK0-005",
+    "format": "Multiple choice & performance-based",
+    "duration": "90 minutes",
+    "passing_score": 720,
+    "max_score": 900
+  },
+  "skills": [
+    "System Management",
+    "Security",
+    "Scripting, Containers & Automation",
+    "Troubleshooting"
+  ]
+}

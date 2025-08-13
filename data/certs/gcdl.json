@@ -1,0 +1,12 @@
+{
+  "id": "gcdl",
+  "name": "Google Cloud Digital Leader",
+  "vendor": "Google Cloud",
+  "description": "Demonstrates knowledge of Google Cloud products, services, and common use cases.",
+  "roadmap": [
+    "Understand cloud concepts",
+    "Familiarize with Google Cloud services",
+    "Review security and compliance in Google Cloud",
+    "Identify digital transformation opportunities"
+  ]
+}

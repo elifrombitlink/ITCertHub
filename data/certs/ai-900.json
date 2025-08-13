@@ -1,0 +1,13 @@
+{
+  "id": "ai-900",
+  "name": "Microsoft Azure AI Fundamentals",
+  "vendor": "Microsoft",
+  "description": "Validates foundational knowledge of AI and machine learning concepts and services within Microsoft Azure.",
+  "roadmap": [
+    "Understand AI workloads and considerations",
+    "Understand fundamental principles of machine learning on Azure",
+    "Describe features of computer vision workloads on Azure",
+    "Describe features of Natural Language Processing (NLP) workloads on Azure",
+    "Describe features of conversational AI workloads on Azure"
+  ]
+}

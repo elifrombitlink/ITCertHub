@@ -1,0 +1,12 @@
+{
+  "id": "g-ace",
+  "name": "Google Associate Cloud Engineer",
+  "vendor": "Google Cloud",
+  "description": "Validates the ability to deploy, monitor, and maintain projects on Google Cloud.",
+  "roadmap": [
+    "Set up cloud projects",
+    "Manage Google Cloud resources",
+    "Configure network and access",
+    "Deploy and manage applications"
+  ]
+}

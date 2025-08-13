@@ -1,0 +1,13 @@
+{
+  "id": "aruba-aca",
+  "name": "Aruba Certified Associate",
+  "vendor": "Aruba Networks",
+  "description": "Validates foundational networking knowledge and skills for Aruba products and solutions.",
+  "roadmap": [
+    "Basic networking concepts",
+    "Aruba product portfolio overview",
+    "Wired and wireless networking setup",
+    "Security fundamentals for Aruba networks",
+    "Troubleshooting Aruba solutions"
+  ]
+}

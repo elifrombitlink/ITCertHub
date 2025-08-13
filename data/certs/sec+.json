@@ -1,0 +1,26 @@
+{
+  "id": "comptia-security-plus",
+  "name": "CompTIA Security+",
+  "vendor": "CompTIA",
+  "description": "Covers foundational cybersecurity knowledge, including threats, attacks, vulnerabilities, architecture, and security operations.",
+  "roadmap": [
+    "IT Fundamentals+",
+    "A+",
+    "Network+",
+    "Security+"
+  ],
+  "exam": {
+    "code": "SY0-701",
+    "format": "Multiple choice & performance-based",
+    "duration": "90 minutes",
+    "passing_score": 750,
+    "max_score": 900
+  },
+  "skills": [
+    "Threats, Attacks & Vulnerabilities",
+    "Architecture & Design",
+    "Implementation",
+    "Operations & Incident Response",
+    "Governance, Risk & Compliance"
+  ]
+}

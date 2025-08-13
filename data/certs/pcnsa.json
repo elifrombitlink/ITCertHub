@@ -1,0 +1,13 @@
+{
+  "id": "pcnsa",
+  "name": "Palo Alto Networks Certified Network Security Administrator",
+  "vendor": "Palo Alto Networks",
+  "description": "Validates ability to deploy, configure, and manage Palo Alto Networks firewall systems.",
+  "roadmap": [
+    "Palo Alto Networks firewall basics",
+    "Interface and zone configuration",
+    "Security and NAT policy setup",
+    "User-ID, App-ID, and Content-ID features",
+    "Monitoring and reporting"
+  ]
+}

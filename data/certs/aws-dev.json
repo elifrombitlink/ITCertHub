@@ -1,0 +1,12 @@
+{
+  "id": "aws-dev",
+  "name": "AWS Certified Developer \u2013 Associate",
+  "vendor": "Amazon Web Services",
+  "description": "Covers developing and maintaining applications on the AWS platform.",
+  "roadmap": [
+    "Develop with AWS services",
+    "Integrate AWS services into applications",
+    "Optimize application performance on AWS",
+    "Use AWS developer tools"
+  ]
+}

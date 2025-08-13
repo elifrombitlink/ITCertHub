@@ -1,0 +1,12 @@
+{
+  "id": "isc2-cc",
+  "name": "ISC2 Certified in Cybersecurity",
+  "vendor": "ISC2",
+  "description": "Covers foundational cybersecurity principles and practices for entry-level professionals.",
+  "roadmap": [
+    "Understand security principles",
+    "Identify common threats and vulnerabilities",
+    "Basics of access control and identity management",
+    "Incident response fundamentals"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+    "id": "ccna",
+    "name": "Cisco Certified Network Associate (CCNA)",
+    "description": "Foundational networking certification covering routing, switching, network access, IP connectivity, IP services, security fundamentals, and automation.",
+    "provider": "Cisco",
+    "level": "Associate",
+    "exam_code": "200-301",
+    "resources": [
+        {
+            "type": "Official Study Guide",
+            "link": "https://www.cisco.com/c/en/us/training-events/training-certifications/exams/current-list/ccna-200-301.html"
+        },
+        {
+            "type": "Practice Tests",
+            "link": "https://learningnetwork.cisco.com/s/ccna-practice"
+        },
+        {
+            "type": "Video Training",
+            "link": "https://www.cbtnuggets.com/it-training/cisco/ccna"
+        }
+    ],
+    "roadmap_position": "Networking Fundamentals",
+    "estimated_time_hours": 120
+}

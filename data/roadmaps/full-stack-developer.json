@@ -1,0 +1,12 @@
+{
+  "name": "Full Stack Developer",
+  "description": "Roadmap for becoming a full stack developer with certifications for development, cloud, and security.",
+  "certifications": [
+    "devnet-assoc",
+    "az-900",
+    "dp-900",
+    "aws-ccp",
+    "aws-dev",
+    "gcdl"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "aws-ccp",
+  "name": "AWS Certified Cloud Practitioner",
+  "vendor": "Amazon Web Services",
+  "description": "Covers fundamental AWS Cloud concepts, services, and basic security and compliance aspects.",
+  "roadmap": [
+    "Understand AWS Cloud concepts",
+    "Learn core AWS services",
+    "Understand AWS security and compliance",
+    "Review AWS pricing and support"
+  ]
+}

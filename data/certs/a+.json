@@ -1,0 +1,33 @@
+{
+  "id": "comptia-a-plus",
+  "name": "CompTIA A+",
+  "vendor": "CompTIA",
+  "description": "Entry-level IT certification covering hardware, software, networking, and troubleshooting.",
+  "difficulty": "Beginner",
+  "topics": [
+    "Hardware",
+    "Operating Systems",
+    "Networking",
+    "Security",
+    "Troubleshooting"
+  ],
+  "recommendedHours": 120,
+  "prerequisites": [],
+  "resources": [
+    {
+      "type": "Book",
+      "title": "CompTIA A+ Certification All-in-One Exam Guide",
+      "link": "https://www.amazon.com/dp/1260454037"
+    },
+    {
+      "type": "Video",
+      "title": "Professor Messer's A+ Training",
+      "link": "https://www.professormesser.com/free-a-plus-training"
+    },
+    {
+      "type": "Practice Exam",
+      "title": "ExamCompass A+ Practice Tests",
+      "link": "https://www.examcompass.com/comptia/a-plus-certification/free-a-plus-practice-tests"
+    }
+  ]
+}

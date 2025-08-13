@@ -1,0 +1,12 @@
+{
+  "id": "jncis-ent",
+  "name": "Juniper Networks Certified Internet Specialist - Enterprise",
+  "vendor": "Juniper Networks",
+  "description": "Advanced enterprise networking knowledge for Junos OS, including routing, switching, and security.",
+  "roadmap": [
+    "Advanced routing technologies",
+    "Enterprise switching solutions",
+    "OSPF, BGP, and multicast in Junos",
+    "Enterprise security implementation"
+  ]
+}

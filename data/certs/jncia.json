@@ -1,0 +1,12 @@
+{
+  "id": "jncia",
+  "name": "Juniper Networks Certified Internet Associate",
+  "vendor": "Juniper Networks",
+  "description": "Covers networking fundamentals, Junos OS basics, and core routing and switching technologies.",
+  "roadmap": [
+    "Networking fundamentals",
+    "Junos OS basics",
+    "Routing and switching concepts",
+    "Configuration and troubleshooting in Junos"
+  ]
+}

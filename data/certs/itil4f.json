@@ -1,0 +1,12 @@
+{
+  "id": "itil4f",
+  "name": "ITIL 4 Foundation",
+  "vendor": "AXELOS",
+  "description": "Introduces IT service management concepts, principles, and best practices based on the ITIL framework.",
+  "roadmap": [
+    "Understand key IT service management concepts",
+    "Service value system and service value chain",
+    "Guiding principles of ITIL",
+    "ITIL management practices"
+  ]
+}

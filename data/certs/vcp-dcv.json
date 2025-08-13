@@ -1,0 +1,12 @@
+{
+  "id": "vcp-dcv",
+  "name": "VMware Certified Professional - Data Center Virtualization",
+  "vendor": "VMware",
+  "description": "Validates skills to implement, manage, and troubleshoot VMware vSphere infrastructure.",
+  "roadmap": [
+    "Install and configure vSphere components",
+    "Manage virtual machines and templates",
+    "Configure networking and storage",
+    "Monitor and optimize vSphere performance"
+  ]
+}

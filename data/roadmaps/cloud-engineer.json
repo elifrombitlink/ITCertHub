@@ -1,0 +1,16 @@
+{
+  "name": "Cloud Engineer",
+  "description": "Roadmap for becoming a cloud engineer, covering vendor-specific and multi-cloud skills.",
+  "certifications": [
+    "az-900",
+    "az-104",
+    "dp-900",
+    "sc-300",
+    "aws-ccp",
+    "aws-saa",
+    "gcdl",
+    "g-ace",
+    "lfcs",
+    "vcp-dcv"
+  ]
+}

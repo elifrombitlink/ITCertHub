@@ -1,0 +1,11 @@
+{
+  "id": "sc-200",
+  "name": "Microsoft Security Operations Analyst",
+  "vendor": "Microsoft",
+  "description": "Demonstrates ability to investigate, respond to, and hunt for threats using Microsoft Sentinel, Microsoft Defender, and Microsoft 365 Defender.",
+  "roadmap": [
+    "Mitigate threats using Microsoft 365 Defender",
+    "Mitigate threats using Microsoft Defender for Cloud",
+    "Mitigate threats using Microsoft Sentinel"
+  ]
+}

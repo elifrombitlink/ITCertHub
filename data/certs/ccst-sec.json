@@ -1,0 +1,24 @@
+{
+    "id": "ccst-sec",
+    "name": "Cisco Certified Support Technician - Security",
+    "description": "Covers foundational security concepts for IT support roles.",
+    "roadmap": [
+        "Understand cybersecurity principles",
+        "Recognize common security threats",
+        "Apply basic security measures",
+        "Understand access control and authentication",
+        "Perform basic incident response"
+    ],
+    "resources": [
+        {
+            "type": "Book",
+            "title": "Introduction to Cybersecurity",
+            "link": "https://www.cisco.com/"
+        },
+        {
+            "type": "Course",
+            "title": "CCST Security Official Course",
+            "link": "https://www.netacad.com/"
+        }
+    ]
+}
