@@ -6,7 +6,7 @@ import {
   Download, Upload, Trash2, FolderPlus, NotebookPen,
   RefreshCw, Play, Pause, RotateCcw, FileText, Settings, BadgeCheck,
   Sparkles, HelpCircle, BarChart3, Lightbulb, ArrowRight
-} from "lucide-react";
+, Sun, Moon } from "lucide-react";
 import { supabase } from "./supabaseclient";
 // minimal dark mode
 function useDarkMode(defaultMode = "system") {
@@ -528,6 +528,23 @@ const nextFlash = (id, know) => {
 
   return (
     <div className="min-h-screen text-gray-900" style={{ backgroundColor: BRAND_BG }}>
+
+      <style>{`
+        :root.dark body { background-color: #0b0f14; color: #e5e7eb; }
+        :root.dark .bg-white { background-color: #0f172a !important; }
+        :root.dark .bg-white\/80 { background-color: rgba(15,23,42,.8) !important; }
+        :root.dark .bg-gray-50 { background-color: #111827 !important; }
+        :root.dark .text-gray-900 { color: #e5e7eb !important; }
+        :root.dark .text-gray-700 { color: #cbd5e1 !important; }
+        :root.dark .text-gray-600 { color: #94a3b8 !important; }
+        :root.dark .text-gray-500 { color: #94a3b8 !important; }
+        :root.dark .border-gray-200 { border-color: #334155 !important; }
+        :root.dark .border-gray-300 { border-color: #475569 !important; }
+        :root.dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.4) !important; }
+        :root.dark .card, :root.dark .rounded-2xl { background-color: #0f172a !important; }
+        :root.dark .btn-accent { background-color: #1a73e8 !important; border-color: #1a73e8 !important; color: #ffffff !important; }
+      `}</style>
+
       {/* Header */}
       <header className="sticky top-0 z-20 border-b bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
@@ -556,6 +573,14 @@ const nextFlash = (id, know) => {
             <Button variant="outline" onClick={() => setTab("plan")}><ClipboardList size={16}/> My Plan</Button>
             <Button variant="outline" onClick={() => supabase.auth.signOut()}>
               <X size={16}/> Sign out
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setThemeMode(themeMode === "dark" ? "light" : "dark")}
+              title={themeMode === "dark" ? "Switch to light" : "Switch to dark"}
+            >
+              {themeMode === "dark" ? <Sun size={16}/> : <Moon size={16}/>}
             </Button>
           </div>
         </div>
@@ -662,7 +687,7 @@ const nextFlash = (id, know) => {
                         <div className="mt-auto flex items-center gap-2">
                           <Button onClick={()=>setActiveCert(c)} size="sm"><FileText size={16}/> Details</Button>
                           {!plan[c.id] ? (
-                            <Button variant="accent" size="sm" onClick={()=>addToPlan(c.id)}><FolderPlus size={16}/> Add to Plan</Button>
+                            <Button variant="outline" size="sm" onClick={()=>addToPlan(c.id)}><FolderPlus size={16}/> Add to Plan</Button>
                           ) : (
                             <Button variant="subtle" size="sm" onClick={()=>setTab("plan")}><BadgeCheck size={16}/> In Plan</Button>
                           )}
@@ -1008,7 +1033,7 @@ function Flashcards({ cert, getFlashcards, next, fcProgress }) {
             </Button>
           )}
           <Button
-            variant="accent"
+            variant="outline"
             onClick={() => {
               setShow(false);
               next(cert.id, true);
