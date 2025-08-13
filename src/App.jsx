@@ -1485,10 +1485,10 @@ function buildICS({ title="Study Block", description="", start=Date.now()+5*6000
   const dt = new Date(start);
   const y = dt.getUTCFullYear(); const m = pad(dt.getUTCMonth()+1); const d = pad(dt.getUTCDate());
   const hh = pad(dt.getUTCHours()); const mm = pad(dt.getUTCMinutes());
-  const dtStart = f"{y}{m}{d}T{hh}{mm}00Z";
+  const dtStart = `${y}${m}${d}T${hh}${mm}00Z`;
   const end = new Date(dt.getTime() + duration*60000);
   const y2=end.getUTCFullYear(); const m2=pad(end.getUTCMonth()+1); const d2=pad(end.getUTCDate()); const hh2=pad(end.getUTCHours()); const mm2=pad(end.getUTCMinutes());
-  const dtEnd = f"{y2}{m2}{d2}T{hh2}{mm2}00Z";
+  const dtEnd = `${y2}${m2}${d2}T${hh2}${mm2}00Z`;
   const ics = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//CertWolf//EN
